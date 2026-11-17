@@ -32,6 +32,8 @@ export function supervisionar({
   iniciarProcesso = (cmd, a, o) => spawn(cmd, a, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, ...o }),
   esperar = pausar,
   relogio = Date.now,
+  prefixoLog = 'ffmpeg',
+  encerrarProcesso = null,
 }) {
   let parando = false;
   let ativo = ativoInicial;
@@ -45,6 +47,7 @@ export function supervisionar({
   const dormirAte = () => new Promise((r) => { acorda = r; });
 
   async function encerrar(f) {
+    if (encerrarProcesso) return encerrarProcesso(f);
     const saiu = new Promise((r) => f.once('exit', r));
     try { f.stdin?.write('q'); } catch { /* já fechou */ }
     const t = setTimeout(() => { try { f.kill(); } catch { /* ignora */ } }, esperarSaidaMs);
@@ -73,7 +76,7 @@ export function supervisionar({
         f.on('exit', (codigo, sinal) => resolve({ codigo, sinal }));
         f.stdout?.on('data', (b) => { try { aoSaida(b); } catch (e) { log(`Erro ao tratar a saída: ${e.message}`); } });
         f.stderr?.on('data', (b) => {
-          for (const l of String(b).split(/\r?\n/)) if (l.trim()) log(`[ffmpeg] ${l}`);
+          for (const l of String(b).split(/\r?\n/)) if (l.trim()) log(`[${prefixoLog}] ${l}`);
         });
       });
       filho = null;

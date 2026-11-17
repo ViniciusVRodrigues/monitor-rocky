@@ -10,3 +10,4 @@ config.local.json
 cloudflared/*.json
 .claude/worktrees/
 .claude/settings.local.json
+logs/

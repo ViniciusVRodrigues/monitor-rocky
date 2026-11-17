@@ -16,6 +16,9 @@
     "camera": "node scripts/controle.js camera",
     "ouvir": "node scripts/controle.js ouvir",
     "dispositivos": "node scripts/dispositivos.js",
-    "test": "node --test"
+    "test": "node --test",
+    "instalar-servico": "node scripts/servico.js instalar",
+    "remover-servico": "node scripts/servico.js remover",
+    "vigia": "node src/vigia.js"
   }
 }
