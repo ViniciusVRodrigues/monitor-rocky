@@ -18,6 +18,7 @@ if (topo) {
 const PADRAO = {
   aovivoConectarSegundos: 15, ouvirModo: 'auto', ouvirHz: 24000, ouvirGanhoDb: 18, ouvirFolgaMs: 300, ouvirAtrasoMaxMs: 1000, ouvirMp3AtrasoMaxSegundos: 4,
   linhaTempoAtualizarSegundos: 30, bufferHoras: 4, trechoSegundos: 60, controleTempoLimiteSegundos: 20, somAoAbrir: true,
+  guardarMaxArquivos: 120, apagarHoraTrechos: true,
 };
 
 const CHIPS = {
@@ -189,8 +190,11 @@ async function principal() {
   // ---------- linha do tempo ----------
   const dia = criarDia({
     cfg,
+    player,
+    anunciar,
     aoTocar: (g) => { player.tocar(g); $('player').scrollIntoView({ block: 'nearest' }); },
   });
+  dia.definirOffline(true);
   dia.iniciar();
 
   // ---------- conexão e SSE ----------
@@ -200,6 +204,7 @@ async function principal() {
     conectado = ok;
     mostrarOffline(!ok);
     controles.definirOffline(!ok);
+    dia.definirOffline(!ok);
     if (!ok) {
       estado = 'desconhecido';
       reiniciando = false;

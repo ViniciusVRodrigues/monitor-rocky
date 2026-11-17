@@ -59,6 +59,7 @@ Câmera compartilhada: o app Câmera e o ffmpeg prendem o dispositivo cada um (t
 gravacoes/trechos/AAAA-MM-DD/HH-MM-SS.mp4   # trechos; só os das últimas bufferHoras
 gravacoes/aovivo/index.m3u8 (+ seg*.ts)     # HLS ao vivo, janela curta
 gravacoes/estado.json                       # estado atual
+gravacoes/guardados/<nome>/*.mp4            # o que a pessoa guardou; a limpeza nunca toca
 ```
 
 Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o HLS também fica só de áudio. Quem lê os trechos deve checar se há faixa de vídeo.
@@ -184,6 +185,27 @@ Chaves novas do `config.json` (sobrepostas por `config.local.json`):
 | `nivelSuavizacao` | 0.6 | queda suave da barra (0 a menos de 1); a subida é imediata |
 | `nivelPisoDb`, `nivelTetoDb` | -80, -20 | dBFS que vira barra vazia / barra cheia |
 | `somAoAbrir` | true | a página abre com o som ao vivo ligado |
+
+## Apagar e guardar gravações (ROCKY-14)
+
+Na linha do tempo, cada clipe tem **Guardar** e **Apagar**, e cada bloco de trechos tem **Guardar**. No fim de cada hora há **Apagar esta hora**. Antes de apagar, a página sempre pede confirmação e diz quantos itens vão sair. Se o item que está tocando for apagado, o player volta ao ao vivo.
+
+**Guardar** copia o clipe ou os trechos para `gravacoes/guardados/<dia>_<nome>/`. A limpeza de 4 h e a retenção dos clipes nunca tocam nessa pasta. A alternância **Guardados** no topo da linha do tempo lista as pastas guardadas, inclusive as copiadas à mão (qualquer subpasta com `.mp4`), e permite tocá-las em sequência ou apagá-las.
+
+| Chave | Padrão | Para quê |
+| --- | --- | --- |
+| `guardadosPasta` | `guardados` | nome da pasta dos guardados, dentro de `pasta` |
+| `guardarMaxArquivos` | 120 | máximo de arquivos num pedido de guardar |
+| `apagarHoraTrechos` | true | "Apagar esta hora" leva junto a gravação contínua da hora (menos o trecho que está gravando) |
+
+Rotas (todas `POST` com JSON e o cabeçalho `X-Rocky: 1`, como os controles):
+
+- `/api/apagar/evento` `{ dia, id }`;
+- `/api/apagar/hora` `{ dia, hora, ids?, trechos? }`;
+- `/api/guardar` `{ urls, rotulo? }`;
+- `/api/guardados/apagar` `{ nome }`.
+
+`GET /api/guardados` lista os guardados. O contrato completo está em `openspec/changes/apagar-e-guardar-gravacoes/design.md`.
 
 ## Estado
 

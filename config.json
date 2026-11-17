@@ -84,5 +84,8 @@
   "nivelPisoDb": -80,
   "nivelTetoDb": -20,
   "somAoAbrir": true,
-  "saudeTimeoutMs": 10000
+  "saudeTimeoutMs": 10000,
+  "guardadosPasta": "guardados",
+  "guardarMaxArquivos": 120,
+  "apagarHoraTrechos": true
 }

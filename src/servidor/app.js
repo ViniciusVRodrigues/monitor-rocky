@@ -5,8 +5,10 @@ import { listarDias, lerDia, diaValido } from './linha-tempo.js';
 import { executarControle, ControleErro, estadoAtual } from './controle.js';
 import { criarAoVivo } from './ao-vivo.js';
 import { criarOuvirSite } from './ouvir-site.js';
+import { apagarEvento, apagarHora, guardar, listarGuardados, apagarGuardado, nomeGuardados, GravacaoErro } from './gravacoes.js';
 
 const MAX_CORPO = 1024;
+const MAX_CORPO_GRAVACOES = 16 * 1024;
 
 /** ISO 8601 com o deslocamento local (ex.: 2026-11-17T14:03:05-03:00). */
 export function isoLocal(d = new Date()) {
@@ -17,12 +19,12 @@ export function isoLocal(d = new Date()) {
     `${sinal}${p(Math.floor(Math.abs(off) / 60))}:${p(Math.abs(off) % 60)}`;
 }
 
-function lerCorpo(req) {
+function lerCorpo(req, max = MAX_CORPO) {
   return new Promise((resolve, reject) => {
     const partes = []; let total = 0;
     req.on('data', (b) => {
       total += b.length;
-      if (total > MAX_CORPO) { reject(new ControleErro(413, 'Pedido grande demais.')); req.destroy(); return; }
+      if (total > max) { reject(new ControleErro(413, 'Pedido grande demais.')); req.destroy(); return; }
       partes.push(b);
     });
     req.on('end', () => resolve(Buffer.concat(partes).toString('utf8')));
@@ -51,6 +53,8 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     aovivoSegundos: cfg.aovivoSegundos, aovivoSegmentos: cfg.aovivoSegmentos,
     controleTempoLimiteSegundos: cfg.controleTempoLimiteSegundos ?? 20,
     somAoAbrir: cfg.somAoAbrir ?? true, nivelHz: cfg.nivelHz ?? 10,
+    guardarMaxArquivos: cfg.guardarMaxArquivos ?? 120,
+    apagarHoraTrechos: cfg.apagarHoraTrechos ?? true,
   });
 
   async function controle(req, res) {
@@ -73,6 +77,36 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     }
   }
 
+  const guardadosNome = nomeGuardados(cfg);
+
+  /** Rotas POST de apagar e guardar: mesma proteção do controle, corpo JSON de até 16 KB. */
+  const ESCRITA = {
+    '/api/apagar/evento': (corpo) => apagarEvento(cfg.pasta, corpo),
+    '/api/apagar/hora': (corpo) => apagarHora(cfg.pasta, corpo, { agora: agora(), trechoSegundos: cfg.trechoSegundos }),
+    '/api/guardar': (corpo) => guardar(cfg, corpo, { agora: agora() }),
+    '/api/guardados/apagar': (corpo) => apagarGuardado(cfg, corpo),
+  };
+
+  async function escrita(req, res, fn) {
+    if (!controlePermitido(req)) return json(res, 403, { ok: false, erro: 'Pedido recusado.' });
+    let corpo;
+    try {
+      corpo = JSON.parse(await lerCorpo(req, MAX_CORPO_GRAVACOES));
+    } catch (e) {
+      if (e instanceof ControleErro) return json(res, e.status, { ok: false, erro: e.message });
+      return json(res, 400, { ok: false, erro: 'Pedido inválido.' });
+    }
+    if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) return json(res, 400, { ok: false, erro: 'Pedido inválido.' });
+    try {
+      const r = await fn(corpo);
+      json(res, req.url.startsWith('/api/guardar') && r.guardado ? 201 : 200, r);
+    } catch (e) {
+      if (e instanceof GravacaoErro) return json(res, e.status, { ok: false, erro: e.message });
+      log(`Erro ao apagar/guardar: ${e.message}`);
+      json(res, 500, { ok: false, erro: 'Não deu para concluir.' });
+    }
+  }
+
   async function rotear(req, res) {
     const url = req.url ?? '/';
     if (!url.startsWith('/')) return naoEncontrado(res);
@@ -81,6 +115,10 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     if (caminho === '/api/controle') {
       if (req.method !== 'POST') return json(res, 405, { ok: false, erro: 'Método não permitido.' }, { Allow: 'POST' });
       return controle(req, res);
+    }
+    if (Object.hasOwn(ESCRITA, caminho)) {
+      if (req.method !== 'POST') return json(res, 405, { ok: false, erro: 'Método não permitido.' }, { Allow: 'POST' });
+      return escrita(req, res, ESCRITA[caminho]);
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       return json(res, 405, { ok: false, erro: 'Método não permitido.' }, { Allow: 'GET, HEAD' });
@@ -93,6 +131,7 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     if (ehApi) {
       if (caminho === '/api/config') return json(res, 200, apiConfig());
       if (caminho === '/api/estado') return json(res, 200, { ...estadoAtual(monitor), agora: isoLocal(agora()) });
+      if (caminho === '/api/guardados') return json(res, 200, listarGuardados(cfg));
       if (caminho === '/api/dias') return json(res, 200, listarDias(cfg.pasta, agora()));
       if (caminho.startsWith('/api/dia/')) {
         const dia = caminho.slice('/api/dia/'.length);
@@ -107,7 +146,7 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
       return naoEncontrado(res);
     }
 
-    const r = ehFluxo ? resolverGravacao(cfg.pasta, caminho)
+    const r = ehFluxo ? resolverGravacao(cfg.pasta, caminho, guardadosNome)
       : (resolverVendor(raiz, caminho) ?? resolverEstatico(raiz, caminho));
     if (!r) return naoEncontrado(res);
     servirArquivo(req, res, r);

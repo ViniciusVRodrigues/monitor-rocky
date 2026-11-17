@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve, isAbsolute } from 'node:path';
+import { nomeGuardados } from './servidor/gravacoes.js';
 
 export class ConfigErro extends Error {}
 
@@ -90,6 +91,15 @@ export function carregarConfig(raiz) {
     if (cfg[k] !== undefined && !(typeof cfg[k] === 'number' && Number.isFinite(cfg[k]))) {
       throw new ConfigErro(`Configuração inválida: "${k}" precisa ser um número (dB).`);
     }
+  }
+  if (cfg.guardadosPasta !== undefined) {
+    try { nomeGuardados(cfg); } catch (e) { throw new ConfigErro(`Configuração inválida: ${e.message}`); }
+  }
+  if (cfg.guardarMaxArquivos !== undefined && !(Number.isInteger(cfg.guardarMaxArquivos) && cfg.guardarMaxArquivos > 0)) {
+    throw new ConfigErro('Configuração inválida: "guardarMaxArquivos" precisa ser um inteiro maior que zero.');
+  }
+  if (cfg.apagarHoraTrechos !== undefined && typeof cfg.apagarHoraTrechos !== 'boolean') {
+    throw new ConfigErro('Configuração inválida: "apagarHoraTrechos" precisa ser true ou false.');
   }
   cfg.pasta = isAbsolute(cfg.pasta) ? cfg.pasta : resolve(raiz, cfg.pasta);
   return cfg;

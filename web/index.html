@@ -61,6 +61,10 @@
 
   <section class="dia" aria-labelledby="t-dia">
     <h2 id="t-dia" class="so-leitor">Linha do tempo</h2>
+    <div class="dia-modo" role="group" aria-label="O que mostrar">
+      <button type="button" id="modo-linha" class="botao" aria-pressed="true">Linha do tempo</button>
+      <button type="button" id="modo-guardados" class="botao" aria-pressed="false">Guardados</button>
+    </div>
     <nav class="dia-nav" aria-label="Escolher o dia">
       <button type="button" id="dia-anterior" class="botao">‹ Dia anterior</button>
       <span class="dia-nav-meio"><span id="dia-rotulo" class="dia-rotulo">Hoje</span><button type="button" id="dia-hoje" class="botao botao-link" hidden>Ir para hoje</button></span>
@@ -70,6 +74,7 @@
     <div id="regua-horas" class="regua-horas" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
     <div id="pilula-area" class="pilula-area" aria-live="polite"><button type="button" id="pilula" class="botao botao-pilula" hidden></button></div>
     <div id="lista" class="lista" aria-busy="false"></div>
+    <div id="guardados" class="lista" aria-busy="false" hidden></div>
   </section>
 </main>
 
