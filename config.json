@@ -23,5 +23,16 @@
   "canalControle": "monitor-rocky",
   "ouvirHz": 16000,
   "ouvirComando": "ffplay",
-  "ouvirArgs": []
+  "ouvirArgs": [],
+  "servicoNome": "monitor-rocky",
+  "logPasta": "logs",
+  "logMaxMB": 5,
+  "logArquivos": 5,
+  "vigiaEsperaSegundos": 2,
+  "vigiaEsperaMaxSegundos": 120,
+  "vigiaEstavelSegundos": 60,
+  "saudeIntervaloSegundos": 60,
+  "alertaFalhasSeguidas": 3,
+  "alertaEstavelSegundos": 120,
+  "alertaToast": true
 }

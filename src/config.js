@@ -7,6 +7,8 @@ const NUMEROS_POSITIVOS = [
   'trechoSegundos', 'bufferHoras', 'fps', 'fpsCamera', 'crf', 'audioHz', 'audioCanais',
   'limpezaMinutos', 'aovivoSegundos', 'aovivoSegmentos', 'esperaReinicioSegundos',
   'esperaReinicioMaxSegundos', 'ouvirHz',
+  'logMaxMB', 'vigiaEsperaSegundos', 'vigiaEsperaMaxSegundos', 'vigiaEstavelSegundos',
+  'saudeIntervaloSegundos', 'alertaFalhasSeguidas', 'alertaEstavelSegundos',
 ];
 const ESTADOS_INICIAIS = ['gravando', 'so-som', 'parado'];
 
@@ -40,6 +42,13 @@ export function carregarConfig(raiz) {
   if (cfg.canalControle !== undefined && !String(cfg.canalControle).trim()) {
     throw new ConfigErro('Configuração inválida: "canalControle" não pode ficar vazio.');
   }
+  if (cfg.logArquivos !== undefined && !(Number.isInteger(Number(cfg.logArquivos)) && Number(cfg.logArquivos) >= 0)) {
+    throw new ConfigErro('Configuração inválida: "logArquivos" precisa ser um inteiro maior ou igual a zero.');
+  }
+  for (const k of ['logPasta', 'servicoNome']) {
+    if (cfg[k] !== undefined && !String(cfg[k]).trim()) throw new ConfigErro(`Configuração inválida: "${k}" não pode ficar vazio.`);
+  }
+  if (cfg.logPasta !== undefined) cfg.logPasta = isAbsolute(cfg.logPasta) ? cfg.logPasta : resolve(raiz, cfg.logPasta);
   cfg.pasta = isAbsolute(cfg.pasta) ? cfg.pasta : resolve(raiz, cfg.pasta);
   return cfg;
 }

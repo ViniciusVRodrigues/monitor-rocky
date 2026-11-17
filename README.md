@@ -89,6 +89,28 @@ Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o 
 
 `import { iniciarMonitor } from './src/captura.js'` devolve `{ gravador, distribuidor, ouvinte, parar }`. `gravador` tem `estado()`, `iniciar()`, `parar()`, `camera('ligar'|'desligar')` e `aoMudar(fn)`. `distribuidor.inscrever(fn)` entrega o áudio PCM s16le mono (`ouvirHz`) e devolve a função de cancelar; o ffmpeg não reinicia ao inscrever ou sair. Aceita `saidasExtras` (saídas extras do ffmpeg, ex.: movimento no ROCKY-2).
 
+## Rodar sozinho (ROCKY-5)
+
+`npm run instalar-servico` cria uma **tarefa agendada** do Windows (nome em `servicoNome`) que sobe o vigia (`src/vigia.js`) sem janela quando você entra no Windows. É tarefa e não serviço porque serviços rodam na sessão 0, que não enxerga a câmera (DirectShow) nem mostra toast. Rodar de novo substitui a tarefa. `npm run remover-servico` remove a tarefa e encerra o vigia que estiver rodando. Para subir agora sem sair da conta: `schtasks /Run /TN monitor-rocky`.
+
+O vigia roda o `npm start` (`src/captura.js`); se ele cair, sobe de novo com espera crescente. Tudo vai para `logs/monitor.log` (rotaciona por tamanho). Também dá para rodá-lo à mão: `npm run vigia`.
+
+**Alertas**: se a câmera ou o microfone somem (o ffmpeg falha `alertaFalhasSeguidas` vezes seguidas, ou o dispositivo não aparece na lista do DirectShow, checada a cada `saudeIntervaloSegundos`), o vigia mostra um toast do Windows e grava `gravacoes/saude.json` (`{"camera":"ok|sumiu","microfone":"ok|sumiu","captura":"ok|falhando","atualizadoEm":...}`) para a página mostrar. Em `parado` não há verificação; em `so-som` a câmera não é verificada. Gancho para o celular (ROCKY-6): `criarSaude({ aoAlerta })` em `src/saude.js` recebe `{ tipo, problema, mensagem, em }` a cada problema e recuperação.
+
+| Chave | Padrão | Para quê |
+| --- | --- | --- |
+| `servicoNome` | `monitor-rocky` | nome da tarefa agendada |
+| `logPasta` | `logs` | pasta do log do vigia |
+| `logMaxMB`, `logArquivos` | 5, 5 | tamanho que dispara a rotação e quantos arquivos antigos manter |
+| `vigiaEsperaSegundos`, `vigiaEsperaMaxSegundos` | 2, 120 | espera ao subir o monitor de novo (dobra até o máximo) |
+| `vigiaEstavelSegundos` | 60 | tempo de pé que zera a espera |
+| `saudeIntervaloSegundos` | 60 | de quanto em quanto tempo checar câmera e microfone |
+| `alertaFalhasSeguidas` | 3 | quedas seguidas do ffmpeg que viram alerta |
+| `alertaEstavelSegundos` | 120 | sem falhas por esse tempo zera a contagem |
+| `alertaToast` | `true` | mostrar o toast do Windows |
+
+Ao parar o vigia, o monitor e o ffmpeg são encerrados à força (o último trecho, de até `trechoSegundos`, pode ficar incompleto).
+
 ## Estado
 
 Em construção. Especificação e decisões em [`openspec/`](openspec/). Licença MIT.

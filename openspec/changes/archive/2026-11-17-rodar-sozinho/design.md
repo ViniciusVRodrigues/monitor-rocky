@@ -1,0 +1,8 @@
+## Decisões
+
+- **Tarefa agendada, não serviço.** Serviços do Windows rodam na sessão 0, isolada da sessão do usuário; a câmera (DirectShow/Media Foundation) e os toasts só funcionam na sessão interativa. Por isso: gatilho de logon, `LogonType=InteractiveToken`, `RunLevel=LeastPrivilege`. Fontes: https://learn.microsoft.com/en-us/windows/win32/services/interactive-services · https://learn.microsoft.com/en-us/windows/win32/taskschd/logon-trigger-example--xml-
+- **Sem janela.** O gatilho do Agendador abre `node.exe` com console; a opção "Hidden" da tarefa não impede isso. A ação é `wscript.exe //B //Nologo <iniciar-oculto.vbs>`, que sobe o vigia com `Run(..., 0)` (janela oculta). Fonte: https://pureinfotech.com/prevent-command-window-appearing-scheduled-tasks-windows-10/
+- **Tarefa por XML** (`schtasks /Create /XML`): permite sem limite de tempo, sem parar na bateria, instância única e reinício em falha, que os flags simples do `schtasks` não cobrem. A geração do XML e dos comandos é função pura, testada sem tocar no Windows.
+- **Vigia como processo à parte**, que usa `supervisionar` (mesma espera crescente do ffmpeg). Ele lê a saída do monitor para contar falhas do ffmpeg e escreve o log com rotação. Parada do vigia: `taskkill /T /F` na árvore (pode perder o último trecho de até `trechoSegundos`).
+- **Toast sem dependência**: PowerShell com `Windows.UI.Notifications.ToastNotificationManager` (WinRT embutido). Fonte: https://den.dev/blog/powershell-windows-notification/
+- **Verificação de dispositivo**: `ffmpeg -list_devices` só lista, não abre a câmera. Roda a cada `saudeIntervaloSegundos`.
