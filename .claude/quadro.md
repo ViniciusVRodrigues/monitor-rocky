@@ -10,9 +10,9 @@
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
-- **ROCKY-10: som claro e correções** (Sonnet) — issue #11, change `som-claro-e-correcoes`. Ganho e taxa do som do site, "Voltar ao ao vivo" bugado, ffmpeg -list_devices preso na saúde.
 
 ## Feito
+- **ROCKY-10: som claro e correções** (2026-11-17) — PR #12, issue #11 fechada, 185 testes. Som do site com ganho (`ouvirGanhoDb` 18) e compressor, `ouvirHz` 24000, `ouvirPcGanhoDb`, "Voltar ao ao vivo" corrigido, `saudeTimeoutMs` mata o ffmpeg preso. Monitor reiniciado com o código novo. Falta conferir de ouvido com a pessoa.
 - **ROCKY-3: servidor e página** (2026-11-17) — PR #10, issue #5 fechada, specs `servidor` e `pagina`, 172 testes. Ao vivo HLS, som ligado com Silenciar, barra de nível, controles com confirmação, linha do tempo. Falta testar no celular real (tela apagada, atraso, Safari/iOS). ROCKY-4: pôr `rocky.vvr.dev.br` em `hostsPermitidos`.
 - **Em uso** (2026-11-17) — tarefa `monitor-rocky` instalada (sobe no logon), monitor gravando, página aberta no ARZOPA (Chrome em modo app). Microfone quase mudo (média -90 dB): a pessoa precisa conferir o ganho do fifine e o volume de entrada do Windows.
 - **ROCKY-2: detecção de eventos** (2026-11-17) — PR #8 e #9, issue #4 fechada, spec em `openspec/specs/deteccao`, 124 testes. Clipes em `gravacoes/clipes/`, registro em `gravacoes/eventos/*.jsonl`, `aoEvento`. Microfone quase mudo no teste (média -91 dB): conferir o ganho com a pessoa.
