@@ -1,0 +1,14 @@
+{
+  "name": "monitor-rocky",
+  "version": "0.1.0",
+  "description": "Babá eletrônica para o Rocky: captura, gravação em trechos e ao vivo.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/captura.js",
+    "dispositivos": "node scripts/dispositivos.js",
+    "test": "node --test"
+  }
+}

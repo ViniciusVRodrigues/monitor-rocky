@@ -1,0 +1,14 @@
+{
+  "video": "",
+  "audio": "",
+  "pasta": "gravacoes",
+  "trechoSegundos": 60,
+  "bufferHoras": 4,
+  "ffmpeg": "ffmpeg",
+  "resolucao": "1280x720",
+  "fpsCamera": 30,
+  "fps": 15,
+  "aovivoSegundos": 2,
+  "aovivoSegmentos": 6,
+  "limpezaMinutos": 5
+}
