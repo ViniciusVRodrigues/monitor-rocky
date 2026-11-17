@@ -60,6 +60,31 @@ export function decidirSomAoAbrir({ somAoAbrir, salvo }) {
   return somAoAbrir !== false;
 }
 
+/** dB → fator linear de amplitude. Valor ausente ou inválido = sem ganho (1). */
+export function ganhoLinear(db) {
+  const n = typeof db === 'number' ? db : Number.NaN;
+  return Number.isFinite(n) ? 10 ** (n / 20) : 1;
+}
+
+/**
+ * Liga a origem à saída por GainNode (`ouvirGanhoDb`) e DynamicsCompressor, que segura um
+ * latido alto depois do ganho para não estourar. Devolve o nó de ganho.
+ */
+export function montarCadeia(ctx, origem, cfg) {
+  const ganho = ctx.createGain();
+  ganho.gain.value = ganhoLinear(cfg.ouvirGanhoDb);
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = cfg.ouvirCompLimiarDb ?? -18;
+  comp.knee.value = cfg.ouvirCompJoelhoDb ?? 12;
+  comp.ratio.value = cfg.ouvirCompRazao ?? 12;
+  comp.attack.value = 0.003;
+  comp.release.value = 0.25;
+  origem.connect(ganho);
+  ganho.connect(comp);
+  comp.connect(ctx.destination);
+  return ganho;
+}
+
 const TEXTOS = {
   desligado: 'Ativar som',
   bloqueado: 'Ativar som',
@@ -116,6 +141,9 @@ export function criarOuvir({ cfg, aoMudar }) {
 
   function ligar() {
     sessao += 1;
+    clearTimeout(timerReconectar);
+    parte?.parar(); // nunca deixa duas partes ativas (som duplicado)
+    parte = null;
     falhas = 0;
     mudar('conectando');
     // Roda dentro do clique: cria o AudioContext / o <audio> e chama play() já.
@@ -148,6 +176,8 @@ function ouvirPcm(cfg, ganchos) {
   let parou = false;
   let proximo = 0;
   let sobra = null;
+  const entrada = ctx.createGain(); // ponto único de entrada dos blocos
+  montarCadeia(ctx, entrada, cfg);
 
   (async () => {
     try {
@@ -173,7 +203,7 @@ function ouvirPcm(cfg, ganchos) {
         if (plano.descartar) continue;
         const fonte = ctx.createBufferSource();
         fonte.buffer = buffer;
-        fonte.connect(ctx.destination);
+        fonte.connect(entrada);
         fonte.start(plano.inicio);
         ganchos.tocou();
       }
@@ -196,6 +226,16 @@ function ouvirMp3(cfg, ganchos) {
   audio.preload = 'none';
   audio.src = '/api/ouvir/mp3';
   let parou = false;
+  let ctx = null;
+  // O ganho passa por um AudioContext criado no clique; sem ele o <audio> toca sem ganho.
+  try {
+    const Contexto = globalThis.AudioContext || globalThis.webkitAudioContext;
+    if (Contexto) {
+      ctx = new Contexto();
+      montarCadeia(ctx, ctx.createMediaElementSource(audio), cfg);
+      ctx.resume?.().catch(() => {});
+    }
+  } catch { ctx = null; }
   let saltou = false;
 
   audio.addEventListener('playing', ganchos.tocou);
@@ -238,6 +278,7 @@ function ouvirMp3(cfg, ganchos) {
       audio.pause();
       audio.removeAttribute('src');
       audio.load();
+      ctx?.close?.().catch(() => {});
       if ('mediaSession' in navigator) {
         try {
           navigator.mediaSession.metadata = null;

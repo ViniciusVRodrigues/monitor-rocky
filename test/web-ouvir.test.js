@@ -76,3 +76,46 @@ test('som ao abrir: o valor salvo vale mais que a configuração', () => {
   assert.equal(decidirSomAoAbrir({ somAoAbrir: true, salvo: 'lixo' }), true);
   assert.equal(decidirSomAoAbrir({ somAoAbrir: undefined, salvo: null }), true);
 });
+
+import { ganhoLinear, montarCadeia } from '../web/js/ouvir.js';
+
+test('ganho em dB vira fator linear', () => {
+  assert.equal(ganhoLinear(0), 1);
+  assert.ok(Math.abs(ganhoLinear(20) - 10) < 1e-9);
+  assert.ok(Math.abs(ganhoLinear(-6) - 0.501187) < 1e-5);
+  assert.equal(ganhoLinear(undefined), 1);
+  assert.equal(ganhoLinear('x'), 1);
+});
+
+function ctxFalso() {
+  const nos = [];
+  const no = (tipo, extra = {}) => {
+    const n = { tipo, conectadoA: null, connect(d) { n.conectadoA = d; return d; }, ...extra };
+    nos.push(n);
+    return n;
+  };
+  const param = (v = 0) => ({ value: v });
+  return {
+    nos,
+    destination: { tipo: 'destino' },
+    createGain: () => no('ganho', { gain: param(1) }),
+    createDynamicsCompressor: () => no('compressor', {
+      threshold: param(), knee: param(), ratio: param(), attack: param(), release: param(),
+    }),
+  };
+}
+
+test('cadeia: origem → ganho → compressor → saída, com o fator do ganho e o compressor da config', () => {
+  const ctx = ctxFalso();
+  const origem = { tipo: 'origem', connect(d) { this.conectadoA = d; return d; } };
+  const cfg = { ouvirGanhoDb: 20, ouvirCompLimiarDb: -18, ouvirCompRazao: 10 };
+  montarCadeia(ctx, origem, cfg);
+  const ganho = ctx.nos.find((n) => n.tipo === 'ganho');
+  const comp = ctx.nos.find((n) => n.tipo === 'compressor');
+  assert.ok(Math.abs(ganho.gain.value - 10) < 1e-9);
+  assert.equal(comp.threshold.value, -18);
+  assert.equal(comp.ratio.value, 10);
+  assert.equal(origem.conectadoA, ganho);
+  assert.equal(ganho.conectadoA, comp);
+  assert.equal(comp.conectadoA, ctx.destination);
+});

@@ -2,11 +2,12 @@
 
 const REPETIR_MS = 5000;
 
-export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, faixa, faixaTexto, aoClicarTela }) {
+export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, faixa, faixaTexto, conectarMs = 15000, aoModo = () => {} }) {
   let hls = null;
   let estado = 'desconhecido';
   let modo = 'vivo'; // 'vivo' | 'gravacao'
   let timerRepetir = null;
+  let timerConectar = null;
   let gravacao = null; // { urls, i, soAudio, rotulo }
   let acaoTela = null;
 
@@ -24,6 +25,8 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
 
   function soltarHls() {
     clearTimeout(timerRepetir);
+    clearTimeout(timerConectar);
+    video.onplaying = null;
     video.onerror = null;
     video.onended = null;
     if (hls) { hls.destroy(); hls = null; }
@@ -45,7 +48,14 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     mostrarTela('Conectando ao ao vivo…');
     video.hidden = false;
     const url = `/aovivo/index.m3u8?t=${Date.now()}`;
-    const aoTocar = () => { if (modo === 'vivo') { esconderTela(); selo.hidden = false; } };
+    const aoTocar = () => {
+      if (modo !== 'vivo') return;
+      clearTimeout(timerConectar);
+      esconderTela();
+      selo.hidden = false;
+    };
+    // Sem isto, um HLS que nunca toca nem dá erro deixaria "Conectando…" para sempre.
+    timerConectar = setTimeout(() => { if (modo === 'vivo' && estado === 'gravando') erroVivo(); }, conectarMs);
     video.onplaying = aoTocar;
     video.onerror = erroVivo;
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -91,6 +101,7 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     /** Toca uma gravação: { urls: [...], soAudio, rotulo } — emenda as urls em sequência. */
     tocar({ urls, soAudio, rotulo }) {
       soltarHls();
+      if (modo !== 'gravacao') aoModo('gravacao');
       modo = 'gravacao';
       gravacao = { urls, i: 0, soAudio, rotulo };
       selo.hidden = true;
@@ -114,6 +125,7 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     },
 
     voltarAoVivo() {
+      if (modo !== 'vivo') aoModo('vivo');
       modo = 'vivo';
       gravacao = null;
       faixa.hidden = true;

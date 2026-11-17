@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { avaliarDispositivos, ehFalhaDoFfmpeg, criarSaude } from '../src/saude.js';
+import { EventEmitter } from 'node:events';
+import { avaliarDispositivos, ehFalhaDoFfmpeg, criarSaude, listarDispositivos } from '../src/saude.js';
 
 const SAIDA = `[dshow @ 0] DirectShow video devices (some may be both video and audio devices)
 [dshow @ 0]  "FHD Camera" (video)
@@ -101,4 +102,54 @@ test('na falha seguida, a lista de dispositivos aponta qual sumiu', async () => 
 test('erro do gancho aoAlerta não derruba a saúde', async () => {
   const t = montar({ aoAlerta: () => { throw new Error('boom'); } });
   try { t.set(SEM_CAMERA); await t.s.verificar(); assert.equal(t.lerJson().camera, 'sumiu'); } finally { t.limpar(); }
+});
+
+function procPenduradoFalso() {
+  const p = new EventEmitter();
+  p.stdout = new EventEmitter();
+  p.stderr = new EventEmitter();
+  p.mortes = 0;
+  p.kill = () => { p.mortes += 1; setImmediate(() => p.emit('close', null)); };
+  return p;
+}
+
+test('listarDispositivos: ffmpeg que não responde no tempo é morto e vira erro de checagem', async () => {
+  const p = procPenduradoFalso();
+  await assert.rejects(
+    listarDispositivos({ ffmpeg: 'ffmpeg', timeoutMs: 20, spawn: () => p }),
+    /tempo/i,
+  );
+  assert.equal(p.mortes, 1);
+});
+
+test('listarDispositivos: resposta no tempo devolve a saída e não mata nada', async () => {
+  const p = procPenduradoFalso();
+  const r = listarDispositivos({ ffmpeg: 'ffmpeg', timeoutMs: 1000, spawn: () => p });
+  p.stderr.emit('data', 'lista');
+  p.emit('close', 0);
+  assert.equal(await r, 'lista');
+  assert.equal(p.mortes, 0);
+});
+
+test('timeout da checagem não conta como sumiço de dispositivo', async () => {
+  const t = montar({ listar: () => Promise.reject(new Error('A checagem de dispositivos estourou o tempo.')) });
+  try {
+    await t.s.verificar();
+    assert.deepEqual(t.s.situacao(), { camera: 'ok', microfone: 'ok', captura: 'ok' });
+    assert.equal(t.alertas.length, 0);
+  } finally { t.limpar(); }
+});
+
+test('criarSaude passa saudeTimeoutMs ao listar', async () => {
+  let recebido;
+  const pasta = mkdtempSync(join(tmpdir(), 'rocky-saude-'));
+  try {
+    const s = criarSaude({
+      cfg: { ...cfg, pasta, saudeTimeoutMs: 1234 }, toast: false, log: () => {}, lerEstado: () => 'gravando',
+      listarComTempo: (opcoes) => { recebido = opcoes; return SAIDA; },
+    });
+    await s.verificar();
+    assert.equal(recebido.timeoutMs, 1234);
+    assert.equal(recebido.ffmpeg, undefined === cfg.ffmpeg ? undefined : cfg.ffmpeg);
+  } finally { rmSync(pasta, { recursive: true, force: true }); }
 });

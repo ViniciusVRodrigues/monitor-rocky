@@ -8,7 +8,7 @@ import { criarDia } from './dia.js';
 const $ = (id) => document.getElementById(id);
 
 const PADRAO = {
-  ouvirModo: 'auto', ouvirHz: 16000, ouvirFolgaMs: 300, ouvirAtrasoMaxMs: 1000, ouvirMp3AtrasoMaxSegundos: 4,
+  aovivoConectarSegundos: 15, ouvirModo: 'auto', ouvirHz: 24000, ouvirGanhoDb: 18, ouvirFolgaMs: 300, ouvirAtrasoMaxMs: 1000, ouvirMp3AtrasoMaxSegundos: 4,
   linhaTempoAtualizarSegundos: 30, bufferHoras: 4, trechoSegundos: 60, controleTempoLimiteSegundos: 20, somAoAbrir: true,
 };
 
@@ -79,9 +79,21 @@ async function principal() {
   setInterval(pintarNivel, 500);
 
   // ---------- player ----------
+  let somPausadoPorGravacao = false;
   const player = criarPlayer({
     video: $('video'), tela: $('tela'), telaTexto: $('tela-texto'), telaBotao: $('tela-botao'),
     medidor: $('medidor'), selo: $('selo'), faixa: $('faixa-gravacao'), faixaTexto: $('faixa-gravacao-texto'),
+    conectarMs: cfg.aovivoConectarSegundos * 1000,
+    // Gravação tocando: o som ao vivo do site pausa (senão os dois áudios se misturam) e volta com o ao vivo.
+    aoModo: (modo) => {
+      if (modo === 'gravacao') {
+        somPausadoPorGravacao = ['tocando', 'conectando', 'erro'].includes(ouvir.estado);
+        if (somPausadoPorGravacao) ouvir.desligar();
+      } else if (somPausadoPorGravacao) {
+        somPausadoPorGravacao = false;
+        ouvir.ligar();
+      }
+    },
   });
   $('btn-voltar-vivo').addEventListener('click', () => player.voltarAoVivo());
 
@@ -140,17 +152,19 @@ async function principal() {
     // O toque que liberou o som também chega aqui como clique: não desfazer.
     if (Date.now() - ligouPorGesto < 600) return;
     const antes = ouvir.estado;
+    somPausadoPorGravacao = false; // a pessoa mexeu no som: a escolha dela vale ao voltar ao vivo
     ouvir.alternar();
     if (antes === 'desligado' || antes === 'falhou' || antes === 'bloqueado') gravarSalvo('ligado');
     else gravarSalvo('silenciado');
   }
   btnOuvir.addEventListener('click', aoClicarSom);
   mini.addEventListener('click', aoClicarSom);
-  toque.addEventListener('click', () => { if (Date.now() - ligouPorGesto >= 600 && ouvir.estado === 'bloqueado') ouvir.ligar(); });
+  toque.addEventListener('click', () => { if (Date.now() - ligouPorGesto >= 600 && ouvir.estado === 'bloqueado') { somPausadoPorGravacao = false; ouvir.ligar(); } });
 
   const liberar = () => {
     if (ouvir.estado !== 'bloqueado') return;
     ligouPorGesto = Date.now();
+    somPausadoPorGravacao = false;
     ouvir.ligar();
   };
   document.addEventListener('pointerdown', liberar, true);

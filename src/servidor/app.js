@@ -41,7 +41,10 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
   let porta = 0;
 
   const apiConfig = () => ({
-    ouvirModo: cfg.ouvirModo ?? 'auto', ouvirHz: cfg.ouvirHz, ouvirFolgaMs: cfg.ouvirFolgaMs ?? 300,
+    ouvirModo: cfg.ouvirModo ?? 'auto', ouvirHz: cfg.ouvirHz,
+    aovivoConectarSegundos: cfg.aovivoConectarSegundos ?? 15,
+    ouvirGanhoDb: cfg.ouvirGanhoDb ?? 0, ouvirCompLimiarDb: cfg.ouvirCompLimiarDb ?? -18,
+    ouvirCompJoelhoDb: cfg.ouvirCompJoelhoDb ?? 12, ouvirCompRazao: cfg.ouvirCompRazao ?? 12, ouvirFolgaMs: cfg.ouvirFolgaMs ?? 300,
     ouvirAtrasoMaxMs: cfg.ouvirAtrasoMaxMs ?? 1000, ouvirMp3AtrasoMaxSegundos: cfg.ouvirMp3AtrasoMaxSegundos ?? 4,
     linhaTempoAtualizarSegundos: cfg.linhaTempoAtualizarSegundos ?? 30,
     bufferHoras: cfg.bufferHoras, trechoSegundos: cfg.trechoSegundos,

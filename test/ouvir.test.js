@@ -58,3 +58,18 @@ test('player inexistente não derruba o programa', () => {
   assert.doesNotThrow(() => p.emit('error', new Error('ENOENT')));
   assert.equal(o.ativo(), false);
 });
+
+test('argsOuvir: ouvirPcGanhoDb vira -af volume (com limitador) antes da entrada', () => {
+  const a = argsOuvir({ ouvirHz: 24000, ouvirPcGanhoDb: 12 });
+  const i = a.indexOf('-af');
+  assert.ok(i >= 0);
+  assert.match(a[i + 1], /^volume=12dB(,|$)/);
+  assert.match(a[i + 1], /alimiter/);
+  assert.ok(i < a.indexOf('-i'));
+  assert.match(a.join(' '), /-sample_rate 24000/);
+});
+
+test('argsOuvir: ganho 0 ou ausente não põe filtro', () => {
+  assert.ok(!argsOuvir({ ouvirHz: 16000 }).includes('-af'));
+  assert.ok(!argsOuvir({ ouvirHz: 16000, ouvirPcGanhoDb: 0 }).includes('-af'));
+});
