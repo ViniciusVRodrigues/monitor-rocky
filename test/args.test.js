@@ -44,6 +44,26 @@ test('saídas extras entram depois da principal (extensível para o ROCKY-2)', (
   assert.ok(a.indexOf('tee') < a.length - extra.length);
 });
 
+test('saidasExtras como função do estado: so-som não leva saída de vídeo', () => {
+  const extras = (estado, { video }) => (video ? [['-map', video, '-f', 'rawvideo', '-y', 'x']] : []);
+  const gravando = montarArgs(cfg, { estado: 'gravando', saidasExtras: extras });
+  assert.deepEqual(gravando.slice(-6), ['-map', '0:v', '-f', 'rawvideo', '-y', 'x']);
+  const soSom = montarArgs(cfg, { estado: 'so-som', saidasExtras: extras });
+  assert.ok(!soSom.includes('0:v'));
+  assert.ok(!soSom.includes('rawvideo'));
+});
+
+test('a função de extras recebe o estado e os rótulos de entrada', () => {
+  const vistos = [];
+  montarArgs({ ...cfg, fonte: 'teste' }, { estado: 'gravando', saidasExtras: (e, ent) => { vistos.push([e, ent]); return []; } });
+  assert.deepEqual(vistos, [['gravando', { video: '0:v', audio: '1:a' }]]);
+});
+
+test('-y global: o ffmpeg nunca pergunta "overwrite?" (o stdin é o canal do q)', () => {
+  const a = montarArgs(cfg);
+  assert.ok(a.indexOf('-y') > -1 && a.indexOf('-y') < a.indexOf('-i'));
+});
+
 test('lê da câmera a 30 fps e grava na taxa configurada', () => {
   const a = montarArgs({ ...cfg, fpsCamera: 30 }).join(' ');
   assert.match(a, /-framerate 30 /);

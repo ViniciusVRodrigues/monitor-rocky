@@ -8,6 +8,7 @@ import { criarGravador } from './gravador.js';
 import { criarDistribuidor } from './distribuidor.js';
 import { criarOuvinte } from './ouvir.js';
 import { servirCanal } from './canal.js';
+import { iniciarDeteccao } from './deteccao/index.js';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const log = (m) => console.log(`${new Date().toLocaleString('pt-BR')} ${m}`);
@@ -16,9 +17,11 @@ const log = (m) => console.log(`${new Date().toLocaleString('pt-BR')} ${m}`);
  * Inicia o monitor: captura (ffmpeg supervisionado), limpeza do buffer, canal
  * de controle local, distribuidor de áudio e "ouvir no PC".
  *
- * Devolve { gravador, distribuidor, ouvinte, parar } — o ROCKY-2 e o ROCKY-3
- * importam este módulo e usam `gravador` (estado/iniciar/parar/camera) e
- * `distribuidor.inscrever(fn)` (áudio PCM s16le mono em `cfg.ouvirHz`).
+ * Devolve { gravador, distribuidor, ouvinte, deteccao, parar } — o ROCKY-3
+ * importa este módulo e usa `gravador` (estado/iniciar/parar/camera),
+ * `distribuidor.inscrever(fn)` (áudio PCM s16le mono em `cfg.ouvirHz`) e
+ * `deteccao.aoEvento(fn)` (eventos já gravados; `deteccao` é null com
+ * `"deteccao": false`).
  */
 export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = {}) {
   validarDispositivos(cfg);
@@ -28,6 +31,15 @@ export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = 
   const timer = setInterval(() => { garantirPastas(cfg.pasta); limpar(); }, cfg.limpezaMinutos * 60 * 1000);
 
   const distribuidor = criarDistribuidor();
+  // A detecção abre o pipe de quadros antes do ffmpeg partir e acrescenta a saída de movimento.
+  let deteccao = null;
+  try {
+    if (cfg.deteccao !== false) deteccao = await iniciarDeteccao(cfg, { log });
+  } catch (e) { clearInterval(timer); throw e; }
+  const extras = (estado, ent) => [
+    ...(typeof saidasExtras === 'function' ? saidasExtras(estado, ent) : saidasExtras),
+    ...(deteccao ? deteccao.saidasExtras(estado, ent) : []),
+  ];
   let sup = null;
   const gravador = criarGravador({
     cfg, log,
@@ -35,7 +47,7 @@ export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = 
   });
   sup = supervisionar({
     comando: cfg.ffmpeg,
-    args: () => montarArgs(cfg, { estado: gravador.estado(), saidasExtras }),
+    args: () => montarArgs(cfg, { estado: gravador.estado(), saidasExtras: extras }),
     opcoes: { cwd: cfg.pasta },
     antesDeIniciar: () => garantirPastas(cfg.pasta),
     aoSaida: (b) => distribuidor.publicar(b),
@@ -44,6 +56,7 @@ export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = 
     esperaMaxMs: (cfg.esperaReinicioMaxSegundos ?? 60) * 1000,
     log,
   });
+  deteccao?.ligar({ distribuidor });
   const ouvinte = criarOuvinte({ cfg, distribuidor, log });
   let servidor = null;
   if (canal) {
@@ -51,16 +64,18 @@ export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = 
     catch (e) {
       clearInterval(timer);
       await sup.parar();
+      await deteccao?.parar();
       throw new Error(`Não consegui abrir o canal de controle "${cfg.canalControle}" (já há um monitor rodando?): ${e.message}`);
     }
   }
   return {
-    gravador, distribuidor, ouvinte,
+    gravador, distribuidor, ouvinte, deteccao,
     async parar() {
       clearInterval(timer);
       await ouvinte.desligar();
       await servidor?.fechar();
       await sup.parar();
+      await deteccao?.parar();
     },
   };
 }
