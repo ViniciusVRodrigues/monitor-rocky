@@ -42,12 +42,27 @@ SSE em `GET /api/ao-vivo`. Leva as trocas de estado (`gravador.aoMudar`, `ouvint
 ### 7. Ponto de entrada
 `src/principal.js` (`npm start`):
 1. carrega a config;
-2. se `src/deteccao/index.js` existir, importa-o dinamicamente e chama `iniciarDeteccao(cfg)`;
-3. chama `iniciarMonitor(cfg, { saidasExtras })` e depois `d.ligar({ distribuidor })`;
-4. chama `criarServidor({ cfg, monitor, aoEvento })` e `listen(servidorPorta, '127.0.0.1')`;
-5. no Ctrl+C, para o servidor, a detecção e o monitor, nessa ordem.
+2. chama `iniciarMonitor(cfg)`. Com o ROCKY-2 no main, ele mesmo liga a detecção, a menos que `cfg.deteccao === false`, e devolve `deteccao`, que é null quando ela não existe. **Não** chamar `iniciarDeteccao` aqui: rodaria duas vezes;
+3. passa `aoEvento: monitor.deteccao?.aoEvento?.bind(monitor.deteccao)`, que fica undefined sem detecção, para `criarServidor({ cfg, monitor, aoEvento })` e chama `listen(servidorPorta, '127.0.0.1')`;
+4. no Ctrl+C, para o servidor e depois o monitor (que para a detecção).
 
 O `captura.js` continua com o próprio main, para rodar só a captura.
+
+### 8. Nível do som (pedido da pessoa, 2026-11-17)
+Uma barrinha perto do chip e do vídeo mostra se o microfone capta algo, sem tocar som.
+- **Servidor** (`src/servidor/nivel.js`): função pura que recebe blocos s16le e, a cada janela de `1/nivelHz` s de amostras, calcula o RMS, passa para dBFS e mapeia `[nivelPisoDb, 0]` em `[0, 1]`. A subida é imediata. A descida segue `n = max(novo, anterior × nivelSuavizacao)`. O resultado vai como `event: nivel` no SSE `/api/ao-vivo` (com 3 casas). O servidor só se inscreve no distribuidor enquanto houver pelo menos um cliente SSE.
+- **Página**: desenha a barra com `transform: scaleX(n)` (sem transição quando `prefers-reduced-motion`). Em `parado`, ou sem `nivel` há mais de 2 s, mostra "sem som". A barra é `aria-hidden="true"` e leva ao lado um rótulo discreto visível ("Som"). Aparece em `gravando` e `so-som`.
+
+### 9. Som ao vivo ligado ao abrir (pedido da pessoa, 2026-11-17)
+O botão grande deixa de ser "Ouvir" e vira um mute: **"Silenciar"** quando o som toca e **"Ativar som"** quando está silenciado. Como o rótulo muda, o botão não usa `aria-pressed`. Os textos de transição continuam: "Conectando…", "Sem som. Reconectando…" e "Não deu para ouvir. Tentar de novo".
+- **Ao abrir**: o padrão vem de `somAoAbrir`. Se o `localStorage` tiver `rocky.som` (`"ligado"` ou `"silenciado"`), vale ele. Toda leitura e escrita vai em try/catch: sem storage, vale a config.
+- Se for para tocar, a página tenta logo ao carregar. No PCM, cria o `AudioContext` e chama `resume()`; se o `state` continuar `suspended`, está bloqueado. No MP3, `audio.play()` rejeita com `NotAllowedError`. Bloqueado → mostra em destaque, sobre a área do vídeo, o botão **"Toque para ouvir o Rocky"**. O primeiro `pointerdown` ou `keydown` em qualquer lugar da página (ou o botão) inicia o som, e o aviso some. A escolha salva não muda por causa do bloqueio.
+- **Silenciar** fecha o fluxo de áudio (não gasta rede) e salva `"silenciado"`. **Ativar som** abre de novo e salva `"ligado"`.
+- **Política dos navegadores**: o Chrome libera som sem gesto se a pessoa já interagiu com o site, e no desktop também pelo Media Engagement Index (uso frequente de mídia com som no site). Então, no PC usado sempre, a página tende a abrir tocando. Desde o Chrome 71 o `AudioContext` criado sem gesto nasce `suspended`. O Safari no iOS exige gesto a cada carga de página e não guarda isso. A página não tem como "lembrar" a liberação: só a escolha de som ligado ou silenciado.
+  - https://developer.chrome.com/blog/autoplay
+  - https://www.chromium.org/audio-video/autoplay
+  - https://webkit.org/blog/6784/new-video-policies-for-ios/
+- O "Ouvir no PC" (caixas do PC) continua desligado ao iniciar, para não dar eco com a página aberta no mesmo PC.
 
 ## Contrato da API (fixo; o cliente e o servidor seguem este texto)
 
@@ -58,7 +73,7 @@ Toda resposta JSON é `application/json; charset=utf-8`. Os horários dos trecho
 { "ouvirModo": "auto", "ouvirHz": 16000, "ouvirFolgaMs": 300, "ouvirAtrasoMaxMs": 1000,
   "ouvirMp3AtrasoMaxSegundos": 4, "linhaTempoAtualizarSegundos": 30,
   "bufferHoras": 4, "trechoSegundos": 60, "aovivoSegundos": 2, "aovivoSegmentos": 6,
-  "controleTempoLimiteSegundos": 20 }
+  "controleTempoLimiteSegundos": 20, "somAoAbrir": true, "nivelHz": 10 }
 ```
 
 ### `GET /api/estado` → 200
@@ -110,8 +125,11 @@ event: evento
 data: { mesmo formato de um item de "eventos" acima }
 
 : batida
+
+event: nivel
+data: {"nivel":0.23}
 ```
-O primeiro `estado` sai logo ao conectar.
+O primeiro `estado` sai logo ao conectar. O `nivel` vem cerca de `nivelHz` vezes por segundo, enquanto chega PCM (veja §8). Não vem quando não há PCM, como em `parado`.
 
 ### `GET /api/ouvir/pcm` → 200 `application/octet-stream`
 O corpo é PCM s16le mono em `ouvirHz`, em fluxo, até o cliente fechar. Cabeçalhos `X-Taxa: <ouvirHz>` e `Cache-Control: no-store, no-transform`. Acima de `ouvirSiteMax` → 503.
@@ -140,6 +158,10 @@ MP3 em fluxo, compartilhado por todos os ouvintes. Acima de `ouvirSiteMax` → 5
 | `sseBatidaSegundos` | 15 | batida do SSE |
 | `linhaTempoAtualizarSegundos` | 30 | recarga do dia de hoje |
 | `controleTempoLimiteSegundos` | 20 | tempo máximo de um controle |
+| `nivelHz` | 10 | quantas vezes por segundo o nível do som vai para a página |
+| `nivelSuavizacao` | 0.6 | queda suave da barra (0 = sem suavizar, perto de 1 = bem lenta); a subida é imediata |
+| `nivelPisoDb` | -60 | dBFS que vira barra vazia (0 dBFS é barra cheia) |
+| `somAoAbrir` | true | a página abre com o som ao vivo ligado (a escolha salva no aparelho vale mais) |
 
 ## Riscos
 

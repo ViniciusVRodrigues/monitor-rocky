@@ -64,3 +64,14 @@ O servidor SHALL servir de `gravacoes/` só `trechos/` e `clipes/` (`.mp4`, `.jp
 #### Scenario: Último ouvinte sai
 - **WHEN** o único cliente do MP3 fecha a conexão
 - **THEN** o processo codificador é encerrado
+
+### Requirement: Nível do som
+O SSE `/api/ao-vivo` SHALL enviar `event: nivel` com um valor de 0 a 1 cerca de `nivelHz` vezes por segundo, calculado do PCM do distribuidor (RMS em dBFS, mapeado de `nivelPisoDb` a 0). A subida é imediata e a descida é suavizada por `nivelSuavizacao`. O servidor SHALL ler o distribuidor só enquanto houver cliente SSE.
+
+#### Scenario: Silêncio e barulho
+- **WHEN** chega uma janela de PCM zerado e depois uma de onda alta
+- **THEN** o nível vai a 0 e depois perto de 1
+
+#### Scenario: Sem clientes
+- **WHEN** o último cliente SSE fecha
+- **THEN** a inscrição no distribuidor é cancelada

@@ -179,3 +179,17 @@ Parar usa confirmação inline (ver a decisão da pessoa):
 3. **Atalhos de teclado no PC** (C para câmera, O para ouvir).
 - A) Não ter. **Recomendo** começar sem: o foco pode estar em outro app na reunião.
 - B) Ter, com a legenda visível.
+
+
+## Ajustes depois do plano (2026-11-17, pedidos da pessoa)
+- As três decisões de gosto foram aprovadas: as recomendações (A).
+- **Som ao vivo ligado ao abrir** (design §9). O botão grande do Ouvir vira o mute: "Silenciar" quando toca, "Ativar som" quando está silenciado. Mantém o mesmo destaque: largura toda no celular, 56 px. Os ícones são alto-falante e alto-falante cortado, sempre com o texto, sem `aria-pressed`.
+  - Quando o navegador bloqueia: um botão grande "Toque para ouvir o Rocky" sobre a área do vídeo, com fundo escurecido e alvo ≥ 48 px. Qualquer toque ou tecla na página libera.
+- **Barra de nível** (design §8): uma barra fina, de 6 px de altura e cerca de 120 px de largura, na linha do chip de estado, com o rótulo "Som" ao lado.
+  - Cor `--ok` no preenchimento, sobre `--borda`.
+  - A barra é `aria-hidden`. Em `parado` e sem dados mostra o texto "sem som" no lugar.
+  - Sem animação com `prefers-reduced-motion`; mesmo assim, o valor atualiza.
+- Critérios novos:
+  - (17) Com o som ligado e bloqueado, aparece "Toque para ouvir o Rocky" e um toque em qualquer lugar inicia o som.
+  - (18) "Silenciar" sobrevive à recarga da página.
+  - (19) A barra de nível se mexe em `gravando` e `so-som` e mostra "sem som" em `parado`, sem quebrar a altura de 720 px a 390 px.

@@ -14,12 +14,27 @@ A página SHALL tocar o HLS ao vivo (hls.js, ou nativo no Safari), mudo, e SHALL
 - **WHEN** o estado é `so-som`
 - **THEN** a área do vídeo mostra "Câmera liberada para você usar. O som continua gravando." e o botão "Religar câmera"
 
-### Requirement: Ouvir
-O botão "Ouvir" SHALL tocar o som ao vivo com `aria-pressed`, nos estados "Conectando…", "Ouvindo · parar", "Sem som. Reconectando…" e "Não deu para ouvir. Tentar de novo"; no modo `mp3` SHALL usar um `<audio>` iniciado no clique e Media Session.
+### Requirement: Som ao vivo ligado ao abrir
+A página SHALL tentar tocar o som ao vivo ao abrir quando `somAoAbrir` for verdadeiro, mas a escolha salva no aparelho (`localStorage` `rocky.som`) vale mais. O botão grande SHALL alternar entre "Silenciar" e "Ativar som" e salvar a escolha. Se o navegador bloquear o som, a página SHALL mostrar "Toque para ouvir o Rocky" e começar no primeiro toque ou tecla em qualquer lugar. No modo `mp3` SHALL usar um `<audio>` com Media Session. O "Ouvir no PC" SHALL começar desligado.
 
-#### Scenario: Ouvir no PC
-- **WHEN** o modo é `pcm` e a pessoa toca "Ouvir"
-- **THEN** o som toca com atraso menor que `ouvirAtrasoMaxMs` mais a folga
+#### Scenario: Autoplay bloqueado
+- **WHEN** a página abre com o som ligado e o navegador bloqueia o áudio
+- **THEN** aparece "Toque para ouvir o Rocky" e, no primeiro toque, o som começa e o aviso some
+
+#### Scenario: Escolha lembrada
+- **WHEN** a pessoa toca "Silenciar" e recarrega a página
+- **THEN** a página abre silenciada, com o botão "Ativar som"
+
+#### Scenario: Atraso no PC
+- **WHEN** o modo é `pcm` e o som está ligado
+- **THEN** o atraso fica abaixo de `ouvirAtrasoMaxMs` mais a folga
+
+### Requirement: Nível do som
+A página SHALL mostrar, perto do chip e do vídeo, uma barra de nível do microfone vinda do evento `nivel` do SSE, sem tocar som. A barra é `aria-hidden` e vem com um rótulo visível discreto. Em `parado`, ou sem nível há mais de 2 s, ela SHALL mostrar "sem som".
+
+#### Scenario: Só som
+- **WHEN** o estado é `so-som` e o microfone capta barulho
+- **THEN** a barra se mexe
 
 ### Requirement: Controles com retorno
 Cada controle SHALL mostrar "Aplicando…" (com `aria-busy`, demais controles desabilitados) em até 100 ms, SHALL mudar o chip só com a confirmação do servidor e SHALL mostrar erro com "Tentar de novo" se falhar ou passar de `controleTempoLimiteSegundos`. "Parar" SHALL pedir confirmação no próprio lugar, que volta sozinha em 6 s e cancela com Esc.

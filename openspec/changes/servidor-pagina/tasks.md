@@ -9,6 +9,7 @@
 - [ ] 1.7 `src/servidor/ouvir-site.js`: PCM e MP3 compartilhado (spawn injetado), limite de ouvintes
 - [ ] 1.8 `src/servidor/app.js`: `criarServidor({ cfg, monitor, aoEvento, antes })`, rotas e estáticos (`web/`, `/vendor/hls.min.js`)
 - [ ] 1.9 `src/principal.js` e `npm start`; `hls.js` 1.7.4 como dependência exata
+- [ ] 1.9b `src/servidor/nivel.js` + evento `nivel` no SSE (§8); "Ouvir no PC" desligado ao iniciar
 - [ ] 1.10 README: seção do servidor e das chaves novas
 
 ## 2. Página (pacote P2)
@@ -17,6 +18,7 @@
 - [ ] 2.2 `web/index.html` com a estrutura (cabeçalho, ao vivo, Ouvir, controles, dia)
 - [ ] 2.3 `web/js/linha-tempo.js` (funções puras: agrupar trechos em blocos, horas vazias, intensidade) com testes em node
 - [ ] 2.4 `web/js/ouvir.js` (agendador PCM puro testado + modo MP3 com Media Session)
+- [ ] 2.4b Som ligado ao abrir com mute "Silenciar"/"Ativar som", localStorage, aviso "Toque para ouvir o Rocky" (§9); barra de nível (§8)
 - [ ] 2.5 `web/js/app.js`: estado/SSE, player HLS, controles com confirmação, dia e navegação, pílula de eventos novos, banner sem conexão
 
 ## 3. Conferência e entrega
