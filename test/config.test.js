@@ -68,3 +68,18 @@ test('chaves do servidor e do nível do som são validadas', () => {
   const raiz = raizTemp({ ...base, servidorPorta: 8321, ouvirModo: 'mp3', hostsPermitidos: ['a.com'], nivelSuavizacao: 0, nivelPisoDb: -50, somAoAbrir: false });
   try { assert.equal(carregarConfig(raiz).ouvirModo, 'mp3'); } finally { rmSync(raiz, { recursive: true, force: true }); }
 });
+
+test('chaves novas: fpsCamera null vale (usa fps); prioridades e log* validados', () => {
+  const base = { video: '', audio: '', trechoSegundos: 60, bufferHoras: 4, pasta: 'g' };
+  const ok = {
+    fpsCamera: null, tarefaPrioridade: 3, ffmpegPrioridade: 'acima', clipePrioridade: 'abaixo', clipeCopiar: true,
+    logJanelaSegundos: 10, logLinhasPorJanela: 20, logFilaMaxKB: 1024,
+  };
+  const r = raizTemp({ ...base, ...ok });
+  try { assert.equal(carregarConfig(r).fpsCamera, null); } finally { rmSync(r, { recursive: true, force: true }); }
+  for (const ruim of [{ fpsCamera: 0 }, { tarefaPrioridade: 11 }, { tarefaPrioridade: 1.5 }, { ffmpegPrioridade: 'tempo-real' },
+    { clipePrioridade: 'x' }, { clipeCopiar: 'sim' }, { logJanelaSegundos: 0 }, { logLinhasPorJanela: -1 }, { logFilaMaxKB: 0 }]) {
+    const d = raizTemp({ ...base, ...ok, ...ruim });
+    try { assert.throws(() => carregarConfig(d), ConfigErro, JSON.stringify(ruim)); } finally { rmSync(d, { recursive: true, force: true }); }
+  }
+});

@@ -46,7 +46,7 @@ function entrada(cfg, comVideo) {
     const seno = ['-re', '-f', 'lavfi', '-i', `sine=frequency=440:sample_rate=${audioHz}`];
     if (!comVideo) return { args: seno, video: null, audio: '0:a' };
     return {
-      args: ['-re', '-f', 'lavfi', '-i', `testsrc=size=${cfg.resolucao}:rate=${cfg.fpsCamera ?? 30}`, ...seno],
+      args: ['-re', '-f', 'lavfi', '-i', `testsrc=size=${cfg.resolucao}:rate=${cfg.fpsCamera ?? cfg.fps}`, ...seno],
       video: '0:v', audio: '1:a',
     };
   }
@@ -56,7 +56,7 @@ function entrada(cfg, comVideo) {
   return {
     args: [
       '-f', 'dshow', '-rtbufsize', '256M',
-      '-framerate', String(cfg.fpsCamera ?? 30),
+      '-framerate', String(cfg.fpsCamera ?? cfg.fps),
       '-video_size', cfg.resolucao,
       '-i', `video=${cfg.video}:audio=${cfg.audio}`,
     ],

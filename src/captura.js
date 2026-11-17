@@ -54,6 +54,9 @@ export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = 
     ativoInicial: gravador.estado() !== 'parado',
     esperaInicialMs: (cfg.esperaReinicioSegundos ?? 1) * 1000,
     esperaMaxMs: (cfg.esperaReinicioMaxSegundos ?? 60) * 1000,
+    prioridade: cfg.ffmpegPrioridade,
+    logJanelaSegundos: cfg.logJanelaSegundos,
+    logLinhasPorJanela: cfg.logLinhasPorJanela,
     log,
   });
   deteccao?.ligar({ distribuidor });

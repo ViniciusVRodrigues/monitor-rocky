@@ -19,15 +19,17 @@ import { existsSync, mkdtempSync, readdirSync, renameSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { nomeDia } from './tempo.js';
+import { aplicarPrioridade } from '../prioridade.js';
 
 const RE_DIA = /^(\d{4})-(\d{2})-(\d{2})$/;
 const RE_TRECHO = /^(\d{2})-(\d{2})-(\d{2})\.mp4$/;
 
-function executar(cmd, args, { capturarStdout = false } = {}) {
+function executar(cmd, args, { capturarStdout = false, prioridade = null, definirPrioridade, log } = {}) {
   return new Promise((resolve, reject) => {
     let p;
     try { p = spawn(cmd, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
     catch (e) { reject(e); return; }
+    aplicarPrioridade({ pid: p.pid, nome: prioridade, definir: definirPrioridade, log });
     let out = '';
     let err = '';
     p.stdout.on('data', (d) => { if (capturarStdout) out += d; });
@@ -109,9 +111,14 @@ function falhou(o, r) {
   return new Error(`Falha ao ${o} (ffmpeg saiu com código ${r.code}):\n${fim}`);
 }
 
-export async function recortarClipe({ trechos, inicioMs, fimMs, destino, instanteMiniaturaMs, cfg }) {
+/**
+ * `executor` e `definirPrioridade` são injetáveis (testes). Os ffmpeg de clipe e de miniatura
+ * sobem com `cfg.clipePrioridade` (padrão 'abaixo'); `cfg.clipeCopiar !== false` usa `-c copy`.
+ */
+export async function recortarClipe({ trechos, inicioMs, fimMs, destino, instanteMiniaturaMs, cfg, executor = executar, definirPrioridade }) {
   if (!trechos?.length) return { clipe: null, miniatura: null, soAudio: false };
   const ffmpeg = cfg.ffmpeg ?? 'ffmpeg';
+  const extra = { prioridade: cfg.clipePrioridade ?? 'abaixo', definirPrioridade };
   const soAudio = trechos.some((t) => !t.temVideo);
   const tmp = `${destino}.tmp.mp4`;
   const final = `${destino}.mp4`;
@@ -123,13 +130,15 @@ export async function recortarClipe({ trechos, inicioMs, fimMs, destino, instant
     const base = ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', lista];
     const codec = soAudio
       ? ['-vn', '-map', '0:a:0?', '-c:a', 'aac', '-b:a', '96k']
-      : [
+      : cfg.clipeCopiar !== false
+        ? ['-map', '0:v:0', '-map', '0:a:0?', '-c', 'copy']
+        : [
         '-map', '0:v:0', '-map', '0:a:0?',
         '-c:v', 'libx264', '-preset', String(cfg.clipePreset ?? 'veryfast'),
         '-crf', String(cfg.clipeCrf ?? 26), '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '96k',
       ];
     const corte = ['-ss', seg(deslocamento), '-t', seg(duracaoTotal)];
-    const r = await executar(ffmpeg, [...base, ...corte, ...codec, '-movflags', '+faststart', '-f', 'mp4', tmp]);
+    const r = await executor(ffmpeg, [...base, ...corte, ...codec, '-movflags', '+faststart', '-f', 'mp4', tmp], extra);
     if (r.code !== 0 || !existsSync(tmp)) throw falhou('recortar o clipe', r);
     renameSync(tmp, final);
   } catch (e) {
@@ -144,10 +153,10 @@ export async function recortarClipe({ trechos, inicioMs, fimMs, destino, instant
   let t = (instanteMiniaturaMs - inicioClipe) / 1000;
   if (!Number.isFinite(t) || t < 0 || t > duracaoTotal) t = duracaoTotal / 2;
   const jpg = `${destino}.jpg`;
-  const gerar = (instante) => executar(ffmpeg, [
+  const gerar = (instante) => executor(ffmpeg, [
     '-hide_banner', '-loglevel', 'error', '-y', '-ss', seg(instante), '-i', final,
     '-frames:v', '1', '-vf', `scale=${Number(cfg.miniaturaLargura ?? 320)}:-2`, '-q:v', '3', jpg,
-  ]);
+  ], extra);
   let m = await gerar(t);
   if (!existsSync(jpg)) m = await gerar(0);
   if (!existsSync(jpg)) throw falhou('gerar a miniatura', m);

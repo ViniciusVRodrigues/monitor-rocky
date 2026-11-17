@@ -31,3 +31,10 @@ test('comandos schtasks: criar com XML (substitui), remover e consultar', () => 
   assert.deepEqual(c.remover, ['/Delete', '/TN', 'monitor-rocky', '/F']);
   assert.deepEqual(c.consultar, ['/Query', '/TN', 'monitor-rocky']);
 });
+
+test('XML: prioridade da tarefa dentro de Settings, padrão 3 e validação 0-10', () => {
+  assert.match(montarTarefaXml({ ...opc, prioridade: 6 }), /<Settings>[\s\S]*<Priority>6<\/Priority>[\s\S]*<\/Settings>/);
+  assert.match(montarTarefaXml(opc), /<Priority>3<\/Priority>/);
+  assert.match(montarTarefaXml({ ...opc, prioridade: 0 }), /<Priority>0<\/Priority>/);
+  for (const ruim of [11, -1, 2.5, 'x']) assert.throws(() => montarTarefaXml({ ...opc, prioridade: ruim }), /prioridade/i);
+});

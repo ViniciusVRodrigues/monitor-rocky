@@ -49,11 +49,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     const arquivoLog = criarLogRotativo({
       pasta: cfg.logPasta ?? join(raiz, 'logs'),
       maxBytes: (cfg.logMaxMB ?? 5) * 1024 * 1024,
+      filaMaxBytes: (cfg.logFilaMaxKB ?? 1024) * 1024,
       arquivos: cfg.logArquivos ?? 5,
     });
     const log = (m) => {
       const linha = /^\d{2}\/\d{2}\/\d{4}/.test(m) ? m : `${new Date().toLocaleString('pt-BR')} ${m}`;
-      arquivoLog.escrever(linha);
+      arquivoLog.escrever(linha); // assíncrono: não segura quem recebe a saída do monitor
       console.log(linha);
     };
     // Gancho para o ROCKY-6 (avisos no celular): passe `aoAlerta` aqui (recebe { tipo, problema, mensagem, em }).
@@ -82,6 +83,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       rmSync(arquivoPid, { force: true });
       log('Vigia encerrando...');
       await v.parar();
+      await Promise.race([arquivoLog.aguardar(), new Promise((r) => setTimeout(r, 2000))]);
       process.exit(0);
     };
     process.on('SIGINT', sair);
