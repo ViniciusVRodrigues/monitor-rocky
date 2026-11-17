@@ -151,6 +151,7 @@ ul { list-style: none; }
 .horas { display: grid; gap: var(--esp-2); }
 .hora { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; overflow: hidden; }
 .hora-cab { display: grid; grid-template-columns: 3.5ch 1fr auto; gap: var(--esp-3); align-items: center; width: 100%; min-height: 56px; padding: 0 var(--esp-3); font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+.hora-cab:focus-visible { outline-offset: -4px; }
 .hora-cab[aria-expanded="true"] { border-bottom: 1px solid var(--borda); }
 .hora-nome { font-weight: 700; font-variant-numeric: tabular-nums; }
 .hora-eventos { font-size: 14px; color: var(--texto-2); }
