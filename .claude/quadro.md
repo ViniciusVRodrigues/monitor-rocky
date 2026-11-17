@@ -3,7 +3,6 @@
 ## A fazer
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
-| ROCKY-1 | Captura e gravação: ffmpeg (DirectShow) grava câmera + microfone em trechos MP4 num buffer de 4 h; config de dispositivos; script que lista os dispositivos | Sonnet | — |
 | ROCKY-2 | Detecção de eventos: movimento e som (latido/choro) com limiar configurável; recorta clipe do evento (pré e pós) a partir dos trechos, com miniatura e registro em JSON | Opus | ROCKY-1 |
 | ROCKY-3 | Servidor e página web: ao vivo (HLS), linha do tempo do dia com eventos, reprodução dos trechos; só 127.0.0.1; responsivo para celular | Opus (tem tela) | ROCKY-1 |
 | ROCKY-4 | Acesso remoto: Cloudflare Tunnel (cloudflared como serviço) + Cloudflare Access com Google; servidor valida o JWT do Access | Opus (segurança) | ROCKY-3 |
@@ -11,6 +10,7 @@
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram) | Opus | ROCKY-2, ROCKY-4 |
 
 ## Fazendo
+- **ROCKY-1: captura e gravação** (Sonnet) — change `captura-gravacao`, issue #1, sessão `rocky-1-captura` (2026-11-17). Ao fechar, disparar ROCKY-2, ROCKY-3 e ROCKY-5 em paralelo.
 
 ## Feito
 - **ROCKY-0: workspace** (2026-11-17) — repositório público, OpenSpec, README, CLAUDE.md, quadro.
