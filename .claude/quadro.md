@@ -10,9 +10,9 @@
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
-- **ROCKY-3 (#5): servidor e página web** (Opus) — sessão iniciada em 2026-11-17.
 
 ## Feito
+- **ROCKY-3: servidor e página** (2026-11-17) — PR #10, issue #5 fechada, specs `servidor` e `pagina`, 172 testes. Ao vivo HLS, som ligado com Silenciar, barra de nível, controles com confirmação, linha do tempo. Falta testar no celular real (tela apagada, atraso, Safari/iOS). ROCKY-4: pôr `rocky.vvr.dev.br` em `hostsPermitidos`.
 - **ROCKY-2: detecção de eventos** (2026-11-17) — PR #8 e #9, issue #4 fechada, spec em `openspec/specs/deteccao`, 124 testes. Clipes em `gravacoes/clipes/`, registro em `gravacoes/eventos/*.jsonl`, `aoEvento`. Microfone quase mudo no teste (média -91 dB): conferir o ganho com a pessoa.
 - **ROCKY-5: rodar sozinho** (2026-11-17) — PR #7, issue #6 fechada, spec em `openspec/specs/rodar-sozinho`, 71 testes. `npm run instalar-servico`/`remover-servico` (tarefa no logon), vigia com log rotativo, alerta de câmera/mic sumidos com gancho `aoAlerta`. A tarefa ainda não foi instalada de verdade (fazer quando o ROCKY-3 entrar).
 - **ROCKY-1: captura e gravação** (2026-11-17) — PR #2 e #3 (change arquivada em `openspec/specs/captura`), issue #1 fechada, 56 testes. Estados gravando/só som/parado, controle por pipe (`npm run iniciar|parar|estado|camera|ouvir`), distribuidor de PCM ao vivo. Câmera DirectShow é exclusiva: liberar é pelo só som. Falta conferir com a pessoa o "ouvir no PC" nas caixas reais.
