@@ -10,6 +10,7 @@
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
+- **ROCKY-11: ao vivo estável, som e responsivo** (Opus) — pesquisa de como outros fazem (WebRTC/go2rtc/MediaMTX/MSE × HLS) antes de mexer. Causa provável: saída lenta (pipe PCM ou movimento) trava o ffmpeg ("rtbufsize too full, frame dropped"). ROCKY-4 espera a escolha do protocolo.
 
 ## Feito
 - **ROCKY-10: som claro e correções** (2026-11-17) — PR #12, issue #11 fechada, 185 testes. Som do site com ganho (`ouvirGanhoDb` 18) e compressor, `ouvirHz` 24000, `ouvirPcGanhoDb`, "Voltar ao ao vivo" corrigido, `saudeTimeoutMs` mata o ffmpeg preso. Monitor reiniciado com o código novo. Falta conferir de ouvido com a pessoa.
