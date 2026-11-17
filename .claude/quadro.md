@@ -12,6 +12,7 @@
 | ROCKY-13 | Ajustes da página: avisos de som duplicados ("Toque para ouvir" e "Ativar som"), validar zoom 200% e modo gravação; perguntar à pessoa se o player fica no topo em 1280 | Opus (visual) | — |
 
 ## Fazendo
+- **ROCKY-14: apagar e guardar gravações** (Opus) — sessão aberta em 2026-11-17, change `openspec/changes/apagar-e-guardar-gravacoes/`, issue #15. Apagar por hora e um a um com confirmação, "Guardar" em `gravacoes/guardados/` (fora da limpeza), lista dos guardados. Clipes de 2026-11-17 já apagados à mão a pedido da pessoa; trechos do Rocky (16:15 e 16:52–17:04) copiados para `gravacoes/guardados/2026-11-17-rocky/`.
 
 ## Feito
 - **ROCKY-11: ao vivo estável, som e responsivo** (2026-11-17) — PR #14, issue #13 fechada, 208 testes. Causa: falta de CPU (tarefa em prioridade abaixo do normal, PC carregado) e saídas que seguravam o ffmpeg. `tarefaPrioridade` acima do normal, clipes em `-c copy`, hls.js antes do HLS nativo do Chrome 156, layout responsivo (vídeo fixo no celular, barra de som sobre a base do vídeo). Teste de 31 min na câmera real sem quadro perdido. 720p veryfast; `fpsCamera` 30 (a câmera não abre 720p a 15). Tarefa reinstalada. Som confirmado claro pela pessoa (2026-11-17).
