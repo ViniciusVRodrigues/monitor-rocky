@@ -54,6 +54,7 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     controleTempoLimiteSegundos: cfg.controleTempoLimiteSegundos ?? 20,
     somAoAbrir: cfg.somAoAbrir ?? true, nivelHz: cfg.nivelHz ?? 10,
     guardarMaxArquivos: cfg.guardarMaxArquivos ?? 120,
+    apagarHoraTrechos: cfg.apagarHoraTrechos ?? true,
   });
 
   async function controle(req, res) {

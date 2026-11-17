@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { carregarConfig, validarDispositivos, ConfigErro } from '../src/config.js';
@@ -92,4 +92,15 @@ test('chaves novas: fpsCamera null vale (usa fps); prioridades e log* validados'
     const d = raizTemp({ ...base, ...ok, ...ruim });
     try { assert.throws(() => carregarConfig(d), ConfigErro, JSON.stringify(ruim)); } finally { rmSync(d, { recursive: true, force: true }); }
   }
+});
+
+test('apagarHoraTrechos precisa ser booleano e vem no config.json como true', () => {
+  for (const ruim of [{ apagarHoraTrechos: 'sim' }, { apagarHoraTrechos: 1 }, { apagarHoraTrechos: null }]) {
+    const raiz = raizTemp({ video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4, ...ruim });
+    try { assert.throws(() => carregarConfig(raiz), ConfigErro, JSON.stringify(ruim)); } finally { rmSync(raiz, { recursive: true, force: true }); }
+  }
+  const raiz = raizTemp({ video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4, apagarHoraTrechos: false });
+  try { assert.equal(carregarConfig(raiz).apagarHoraTrechos, false); } finally { rmSync(raiz, { recursive: true, force: true }); }
+  const padrao = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
+  assert.equal(padrao.apagarHoraTrechos, true);
 });

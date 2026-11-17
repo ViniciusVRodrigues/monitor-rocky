@@ -11,24 +11,27 @@ export const pegarEstado = () => pegarJson('/api/estado');
 export const pegarDias = () => pegarJson('/api/dias');
 export const pegarDia = (dia) => pegarJson(`/api/dia/${encodeURIComponent(dia)}`);
 
+export const pegarGuardados = () => pegarJson('/api/guardados');
+
 /**
- * POST /api/controle. Resolve com { ok, status, estado, ouvindoPC, erro }.
+ * POST JSON com X-Rocky. Resolve com { ok, status, ...corpo } ou { ok: false, status, erro }.
  * Nunca rejeita: falha de rede ou tempo esgotado voltam com ok:false e `erro` em pt-BR.
  */
-export async function enviarControle(acao, tempoLimiteSegundos) {
+export async function postarJson(url, corpoEnvio, tempoLimiteSegundos) {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), tempoLimiteSegundos * 1000);
   try {
-    const r = await fetch('/api/controle', {
+    const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Rocky': '1' },
-      body: JSON.stringify({ acao }),
+      body: JSON.stringify(corpoEnvio),
       signal: abort.signal,
     });
     let corpo = {};
     try { corpo = await r.json(); } catch { /* corpo vazio */ }
     if (r.ok && corpo.ok !== false) return { ok: true, status: r.status, ...corpo };
-    return { ok: false, status: r.status, erro: corpo.erro || 'O monitor não aceitou o pedido.' };
+    // O corpo segue junto: um apagar parcial (200 com ok:false) traz as contagens.
+    return { ...corpo, ok: false, status: r.status, erro: corpo.erro || 'O monitor não aceitou o pedido.' };
   } catch (e) {
     const tempo = e?.name === 'AbortError';
     return { ok: false, status: 0, erro: tempo ? 'O monitor não respondeu a tempo.' : 'Sem conexão com o monitor.' };
@@ -36,6 +39,9 @@ export async function enviarControle(acao, tempoLimiteSegundos) {
     clearTimeout(timer);
   }
 }
+
+/** POST /api/controle. Resolve com { ok, status, estado, ouvindoPC, erro }; nunca rejeita. */
+export const enviarControle = (acao, tempoLimiteSegundos) => postarJson('/api/controle', { acao }, tempoLimiteSegundos);
 
 /**
  * Abre o SSE /api/ao-vivo. Reconecta sozinho (backoff até 10 s).

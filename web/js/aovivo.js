@@ -111,15 +111,19 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     /** Recria o player só se o estado mudou (ou `forcar`, para pedido da pessoa); senão só atualiza as ações. */
     aplicar(novo, acoes, { forcar = false } = {}) { acoesAtuais = acoes; aplicarEstado(novo, acoes, forcar); },
 
-    /** Toca uma gravação: { urls: [...], soAudio, rotulo } — emenda as urls em sequência. */
-    tocar({ urls, soAudio, rotulo }) {
+    /** Toca uma gravação: { urls: [...], soAudio, rotulo, prefixo } — emenda as urls em sequência. */
+    tocar({ urls, soAudio, rotulo, prefixo = 'Gravação' }) {
       soltarHls();
       if (modo !== 'gravacao') aoModo('gravacao');
       modo = 'gravacao';
       gravacao = { urls, i: 0, soAudio, rotulo };
       selo.hidden = true;
       faixa.hidden = false;
-      faixaTexto.textContent = `Gravação · ${rotulo}${soAudio ? ' · só som' : ''}`;
+      const pintarFaixa = () => {
+        const n = gravacao.urls.length;
+        faixaTexto.textContent = `${prefixo} · ${rotulo}${soAudio ? ' · só som' : ''}${n > 1 ? ` · ${gravacao.i + 1} de ${n}` : ''}`;
+      };
+      pintarFaixa();
       video.hidden = false;
       video.muted = false;
       video.controls = true;
@@ -129,6 +133,7 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
       if (soAudio) mostrarTela('Só som', { medir: true });
       const tocarAtual = () => {
         video.src = gravacao.urls[gravacao.i];
+        pintarFaixa();
         video.play().catch(() => {});
       };
       video.onended = () => {
@@ -149,5 +154,7 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     },
 
     get modo() { return modo; },
+    /** Urls da gravação que está tocando; [] no ao vivo. */
+    get urls() { return modo === 'gravacao' && gravacao ? [...gravacao.urls] : []; },
   };
 }

@@ -178,6 +178,36 @@ ul { list-style: none; }
 .lista-vazia { padding: var(--esp-4); background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; }
 .esqueleto { height: 56px; margin-bottom: var(--esp-2); background: var(--borda); border-radius: 12px; opacity: .6; }
 
+/* ---------- apagar e guardar ---------- */
+.dia-modo { display: flex; flex-wrap: wrap; gap: var(--esp-2); flex: none; margin-top: var(--esp-2); }
+.dia-modo .botao { flex: 1 1 8ch; min-width: 0; }
+.dia-modo .botao[aria-pressed="true"] { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
+.guardados { display: grid; gap: var(--esp-2); list-style: none; margin: 0; padding: 0; min-width: 0; }
+#guardados { margin-top: var(--esp-2); min-width: 0; }
+.guardado, .evento, .bloco-linha { display: grid; gap: var(--esp-2); min-width: 0; }
+.guardado { padding: var(--esp-3); background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; }
+.guardado-info { display: flex; align-items: center; gap: var(--esp-3); min-width: 0; }
+.guardado-texto { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.guardado-titulo { font-weight: 700; }
+.acoes-item { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--esp-2); min-width: 0; }
+.acoes-item.com-confirma { grid-column: 1 / -1; justify-content: stretch; }
+.acoes-item .guardar-erro { flex: 1 1 100%; margin: 0; }
+.botao-guardado { color: var(--ok); border-color: var(--ok); cursor: default; }
+.hora-painel { container-type: inline-size; }
+.hora-rodape { display: grid; }
+.hora-rodape .botao { width: 100%; }
+.hora-rodape.com-confirma, .acoes-item.com-confirma { display: grid; }
+.acoes-item .confirma, .hora-rodape .confirma, .guardado .confirma {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr));
+}
+.confirma-texto, .confirma-erro { overflow-wrap: anywhere; min-width: 0; }
+.confirma-erro { grid-column: 1 / -1; margin: 0; }
+@container (min-width: 520px) {
+  .evento, .bloco-linha { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .hora-rodape { justify-items: end; }
+  .hora-rodape .botao { width: auto; }
+}
+
 /* ---------- larguras ---------- */
 @media (max-width: 599.98px) {
   .ao-vivo { margin-inline: calc(-1 * var(--esp-4)); }

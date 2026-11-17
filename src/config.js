@@ -98,6 +98,9 @@ export function carregarConfig(raiz) {
   if (cfg.guardarMaxArquivos !== undefined && !(Number.isInteger(cfg.guardarMaxArquivos) && cfg.guardarMaxArquivos > 0)) {
     throw new ConfigErro('Configuração inválida: "guardarMaxArquivos" precisa ser um inteiro maior que zero.');
   }
+  if (cfg.apagarHoraTrechos !== undefined && typeof cfg.apagarHoraTrechos !== 'boolean') {
+    throw new ConfigErro('Configuração inválida: "apagarHoraTrechos" precisa ser true ou false.');
+  }
   cfg.pasta = isAbsolute(cfg.pasta) ? cfg.pasta : resolve(raiz, cfg.pasta);
   return cfg;
 }
