@@ -1,7 +1,7 @@
 ## 1. Prioridade e CPU (causa raiz)
 - [ ] 1.1 Teste: o XML da tarefa traz `<Priority>` da config (`tarefaPrioridade`).
 - [ ] 1.2 Teste: o supervisor ajusta a prioridade do ffmpeg (`ffmpegPrioridade`) logo após o spawn; falha ao ajustar só gera log.
-- [ ] 1.3 Teste: a câmera abre em `fpsCamera` igual ao `fps` de saída por padrão (sem decodificar quadros descartados).
+- [x] 1.3 Teste: sem `fpsCamera` (null) a câmera abre no `fps` de saída; o `config.json` fica em 30 porque a câmera desta máquina não aceita 15 fps em MJPEG.
 
 ## 2. Saídas que não seguram a captura
 - [ ] 2.1 Teste: o supervisor junta o stderr em linhas inteiras e limita o log por intervalo (resume os repetidos).

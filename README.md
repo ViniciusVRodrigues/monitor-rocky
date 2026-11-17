@@ -72,7 +72,7 @@ Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o 
 | `pasta` | `gravacoes` | onde gravar (relativa à raiz ou absoluta) |
 | `ffmpeg` | `ffmpeg` | executável |
 | `resolucao` | `1280x720` | tamanho do vídeo |
-| `fpsCamera` / `fps` | `null` / 15 | o que a câmera entrega / o que é gravado; `null` abre a câmera no próprio `fps` (sem decodificar quadros jogados fora). Ponha um número se a câmera não aceitar |
+| `fpsCamera` / `fps` | 30 / 15 | o que a câmera entrega / o que é gravado. A câmera desta máquina só entrega 30 fps em MJPEG a 720p; `null` abre a câmera no próprio `fps` (sem decodificar quadros jogados fora), para câmeras que aceitem |
 | `preset`, `crf` | `veryfast`, 23 | qualidade do H.264 (crf menor = melhor) |
 | `audioBitrate`, `audioHz`, `audioCanais` | `96k`, 44100, 1 | áudio AAC gravado |
 | `trechoSegundos` | 60 | duração de cada trecho |

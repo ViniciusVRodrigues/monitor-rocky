@@ -5,7 +5,7 @@
   "pasta": "gravacoes",
   "ffmpeg": "ffmpeg",
   "resolucao": "1280x720",
-  "fpsCamera": null,
+  "fpsCamera": 30,
   "fps": 15,
   "preset": "veryfast",
   "crf": 23,

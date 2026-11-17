@@ -10,7 +10,7 @@
 ## Decisões
 
 - **Prioridade configurável.** `tarefaPrioridade` (padrão 4, normal, no XML do Agendador, escala 0–10) e `ffmpegPrioridade` (padrão `acima`, mapeado a `os.constants.priority.PRIORITY_ABOVE_NORMAL`; aceita `normal`, `acima`, `alta`). O supervisor chama `os.setPriority(pid, …)` logo depois do spawn; falha só vai ao log. Nunca `tempo real`. Reinstalar a tarefa (`npm run instalar-servico`) aplica a prioridade da tarefa.
-- **`fpsCamera` igual a `fps`.** Padrão novo de `fpsCamera` é `null` = usa `fps`. Se a câmera não aceitar o valor, a pessoa põe o número na config (documentado).
+- **`fpsCamera` igual a `fps` quando a câmera aceita.** `null` = usa `fps`. Medido em 2026-11-17: a FHD Camera só abre 1280x720 MJPEG a 30 fps ("Could not set video options" a 15), então o `config.json` fica em 30; o código aceita `null` para outras câmeras.
 - **Log do stderr do ffmpeg.** Junta em linhas inteiras (um pedaço pode cortar a linha) e limita por intervalo: no máximo `logLinhasPorJanela` linhas a cada `logJanelaSegundos`; o excedente vira uma linha "N linhas omitidas". Linhas iguais seguidas viram "(repetida N vezes)".
 - **Vigia.** Escrita do log assíncrona (`fs.createWriteStream` em modo append) em vez de síncrona, com limite de fila: acima dele descarta e conta.
 - **Player.** hls.js primeiro; nativo só sem MSE. O player só é recriado quando o estado muda ou a pessoa pede ("Tentar agora", "Voltar ao ao vivo"). hls.js com `liveSyncDurationCount: 3`, recuperação de erro de mídia (`recoverMediaError`) antes de recriar, e `timerConectar` só até o primeiro `playing`.
