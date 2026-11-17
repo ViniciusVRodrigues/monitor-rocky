@@ -1,15 +1,25 @@
 ## 1. Base
-- [ ] 1.1 `package.json` (ESM, Node >= 20, `npm test`, `npm run dispositivos`, `npm start`), `config.json` com padrões e `config.local.example.json`
-- [ ] 1.2 Leitura da configuração com sobreposição local e validação (testes)
+- [x] 1.1 `package.json`, `config.json` com padrões e `config.local.example.json`
+- [x] 1.2 Leitura da configuração com sobreposição local e validação (testes)
 
 ## 2. Dispositivos
-- [ ] 2.1 Script que roda `ffmpeg -list_devices true -f dshow -i dummy` e extrai vídeo e áudio (parser testado com saída de exemplo)
+- [x] 2.1 Script que lista dispositivos dshow (parser testado)
 
 ## 3. Captura
-- [ ] 3.1 Montagem dos argumentos do ffmpeg (trechos MP4 com `segment` + `strftime`, e HLS ao vivo) como função pura testada
-- [ ] 3.2 Supervisor do processo com reinício e espera crescente (testado com processo falso)
-- [ ] 3.3 Buffer circular: limpeza por idade (testada com pasta temporária)
+- [x] 3.1 Montagem dos argumentos do ffmpeg (tee: trechos MP4 + HLS)
+- [x] 3.2 Supervisor com reinício e espera crescente
+- [x] 3.3 Buffer circular (limpeza por idade)
 
-## 4. Verificação real
-- [ ] 4.1 Rodar com os dispositivos desta máquina por ~3 min: trechos MP4 tocáveis com áudio, `aovivo/index.m3u8` atualizando, limpeza funcionando
-- [ ] 4.2 README: como configurar e rodar
+## 4. Estados, controle e áudio ao vivo (requisitos novos)
+- [x] 4.1 `design.md` e spec atualizados (feito); config ampliada (todas as chaves) e documentada
+- [x] 4.2 `montarArgs` por estado (`gravando`/`so-som`), saída PCM por pipe, fonte de teste (`lavfi`)
+- [x] 4.3 Supervisor: args por partida, `reiniciar`, ativar/desativar, consumir sempre o stdout, intervalo mínimo de 1,1 s
+- [x] 4.4 `gravador` (estados, persistência atômica em `estado.json`, `camera`, `iniciar`, `parar`)
+- [x] 4.5 `distribuidor` de áudio (sem pressão de volta, erros isolados) e `ouvir` no PC (ffplay)
+- [x] 4.6 Canal de controle (named pipe) e CLI `iniciar|parar|camera|ouvir|estado`
+- [x] 4.7 `iniciarMonitor` exportado para o ROCKY-3
+
+## 5. Verificação real
+- [x] 5.1 Com a fonte de teste: estados, pipe de áudio e `ouvir` de ponta a ponta (~3 min)
+- [x] 5.2 Com a FHD Camera e o fifine (~3 min): trechos tocáveis com áudio, `aovivo/` atualizando, limpeza; testar se outro app abre a câmera durante a captura e registrar em `design.md`
+- [x] 5.3 README: cada chave de configuração, comandos, estrutura de pastas
