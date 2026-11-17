@@ -91,3 +91,15 @@ test('avisa quem escuta mudanças de estado', async () => {
     assert.deepEqual(vistos, ['so-som']);
   } finally { c.limpar(); }
 });
+
+test('parar e iniciar seguidos são executados em ordem (limpeza do aovivo antes de religar)', async () => {
+  const c = cenario();
+  try {
+    mkdirSync(join(c.pasta, 'aovivo'));
+    writeFileSync(join(c.pasta, 'aovivo', 'a.ts'), 'x');
+    const [a, b] = await Promise.all([c.g.parar(), c.g.iniciar()]);
+    assert.deepEqual([a, b], ['parado', 'gravando']);
+    assert.deepEqual(c.chamadas, ['ativo:false', 'ativo:true']);
+    assert.deepEqual(readdirSync(join(c.pasta, 'aovivo')), []);
+  } finally { c.limpar(); }
+});

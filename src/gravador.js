@@ -33,7 +33,15 @@ export function criarGravador({ cfg, supervisor, log = console.log }) {
     try { for (const f of readdirSync(dir)) rmSync(join(dir, f), { force: true }); } catch { /* ainda não existe */ }
   }
 
-  async function definirEstado(novo) {
+  // Trocas de estado são serializadas: parar + iniciar seguidos não se misturam.
+  let fila = Promise.resolve();
+  function definirEstado(novo) {
+    const r = fila.then(() => trocar(novo));
+    fila = r.catch(() => {});
+    return r;
+  }
+
+  async function trocar(novo) {
     if (!ESTADOS.includes(novo)) throw new Error(`Estado inválido "${novo}". Use ${ESTADOS.join(', ')}.`);
     if (novo === atual) return atual;
     const antes = atual;

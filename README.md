@@ -49,7 +49,7 @@ As gravações ficam só no seu disco, fora do repositório (`gravacoes/` está 
 | `npm run ouvir -- ligar` / `desligar` | toca o som ao vivo nas caixas do PC (dispositivo padrão do Windows, via ffplay) |
 | `npm run estado` | mostra o estado |
 
-O estado fica em `gravacoes/estado.json` e volta no próximo início. Os comandos falam com o monitor por um pipe nomeado local (`\.\pipe\<canalControle>`), sem porta de rede. Não há agendamento: soltar a câmera é só por comando.
+O estado fica em `gravacoes/estado.json` e volta no próximo início. Os comandos falam com o monitor por um pipe nomeado local (`\\.\pipe\<canalControle>`), sem porta de rede. Não há agendamento: soltar a câmera é só por comando.
 
 Câmera compartilhada: o app Câmera e o ffmpeg prendem o dispositivo cada um (testado; ver `openspec/changes/captura-gravacao/design.md`, com os links). Para usar a câmera em outro app, use `camera -- desligar`. Se aparecer "device already in use", feche o app que a está usando.
 
