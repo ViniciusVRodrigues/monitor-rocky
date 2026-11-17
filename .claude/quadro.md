@@ -3,16 +3,18 @@
 ## A fazer
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
-| ROCKY-4 | Acesso remoto por Tailscale (Serve com HTTPS, rede privada; a pessoa e um convidado, celular e PC do trabalho); sem Cloudflare | Opus (segurança) | ROCKY-11 |
+| ROCKY-4 | Acesso remoto por Tailscale (Serve com HTTPS, rede privada; a pessoa e um convidado, celular e PC do trabalho); sem Cloudflare | Opus (segurança) | — |
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram) | Opus | ROCKY-2, ROCKY-4 |
 | ROCKY-7 | Timeout no recorte de clipe do ffmpeg (um recorte travado segura a fila) + achar o teste intermitente (1 falha em 3 rodadas no main em 2026-11-17) | Sonnet | — |
 | ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
+| ROCKY-12 | Estabilidade fina: picos do event loop (5,5 s e 2,2 s) perto de movimento e clipe; aviso do hls "failed to rename index.m3u8.tmp"; `recuperou` do hls.js que não zera; harness que leva ~3 min para encerrar | Sonnet | — |
+| ROCKY-13 | Ajustes da página: avisos de som duplicados ("Toque para ouvir" e "Ativar som"), validar zoom 200% e modo gravação; perguntar à pessoa se o player fica no topo em 1280 | Opus (visual) | — |
 
 ## Fazendo
-- **ROCKY-11: ao vivo estável, som e responsivo** (Opus) — pesquisa de como outros fazem (WebRTC/go2rtc/MediaMTX/MSE × HLS) antes de mexer. Causa provável: saída lenta (pipe PCM ou movimento) trava o ffmpeg ("rtbufsize too full, frame dropped"). ROCKY-4 espera a escolha do protocolo.
 
 ## Feito
+- **ROCKY-11: ao vivo estável, som e responsivo** (2026-11-17) — PR #14, issue #13 fechada, 208 testes. Causa: falta de CPU (tarefa em prioridade abaixo do normal, PC carregado) e saídas que seguravam o ffmpeg. `tarefaPrioridade` acima do normal, clipes em `-c copy`, hls.js antes do HLS nativo do Chrome 156, layout responsivo (vídeo fixo no celular, barra de som sobre a base do vídeo). Teste de 31 min na câmera real sem quadro perdido. 720p veryfast; `fpsCamera` 30 (a câmera não abre 720p a 15). Tarefa reinstalada. Falta a pessoa confirmar de ouvido que o som está claro.
 - **ROCKY-10: som claro e correções** (2026-11-17) — PR #12, issue #11 fechada, 185 testes. Som do site com ganho (`ouvirGanhoDb` 18) e compressor, `ouvirHz` 24000, `ouvirPcGanhoDb`, "Voltar ao ao vivo" corrigido, `saudeTimeoutMs` mata o ffmpeg preso. Monitor reiniciado com o código novo. Falta conferir de ouvido com a pessoa.
 - **ROCKY-3: servidor e página** (2026-11-17) — PR #10, issue #5 fechada, specs `servidor` e `pagina`, 172 testes. Ao vivo HLS, som ligado com Silenciar, barra de nível, controles com confirmação, linha do tempo. Falta testar no celular real (tela apagada, atraso, Safari/iOS). ROCKY-4: pôr `rocky.vvr.dev.br` em `hostsPermitidos`.
 - **Em uso** (2026-11-17) — tarefa `monitor-rocky` instalada (sobe no logon), monitor gravando, página aberta no ARZOPA (Chrome em modo app). Microfone quase mudo (média -90 dB): a pessoa precisa conferir o ganho do fifine e o volume de entrada do Windows.
