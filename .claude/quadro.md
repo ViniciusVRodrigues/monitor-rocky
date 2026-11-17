@@ -19,6 +19,7 @@
 - Domínio: `rocky.vvr.dev.br` (zona `vvr.dev.br` já está na Cloudflare). O túnel e o Access se configuram pelo Chrome da pessoa (ela loga na Cloudflare).
 - Ordem: fazer o app inteiro local primeiro; o ROCKY-4 (subir) fica por último.
 - Gravação contínua: só as últimas **4 horas** (buffer circular). Eventos viram **clipes** guardados à parte (alguns segundos antes e depois), com retenção própria maior.
+- Controle fácil: iniciar, parar e desligar só a câmera (segue o som), para poder usar a câmera em outros apps; tentar compartilhar a câmera sem desligar. Botões na página no ROCKY-3.
 
 ## Em aberto
 - Quais e-mails Google podem ver (além do da pessoa).
