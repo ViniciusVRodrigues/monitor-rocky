@@ -14,7 +14,10 @@
  *
  * Depois do tee vai uma saída de áudio PCM por `pipe:1` (para ouvir ao vivo e
  * para análise de som). Depois dela, `saidasExtras` permite acrescentar outras
- * saídas completas (listas de argumentos, ex.: análise de movimento no ROCKY-2).
+ * saídas completas (listas de argumentos). Pode ser uma função
+ * `(estado, { video, audio }) => [[...], ...]`, chamada a cada partida, para
+ * saídas que dependem do estado (ex.: movimento só em `gravando`; `video` é
+ * null em `so-som`).
  *
  * `fonte: "teste"` troca o DirectShow por fontes sintéticas (lavfi), para
  * testar sem câmera.
@@ -68,7 +71,8 @@ export function montarArgs(cfg, { estado = 'gravando', saidasExtras = [] } = {})
   const gop = Math.max(1, Math.round(fps * cfg.aovivoSegundos));
   const ent = entrada(cfg, comVideo);
 
-  const args = ['-hide_banner', '-loglevel', 'warning', ...ent.args];
+  // -y: o ffmpeg nunca pergunta "overwrite?" (leria a resposta do stdin, que é o canal do q).
+  const args = ['-hide_banner', '-loglevel', 'warning', '-y', ...ent.args];
   if (comVideo) {
     args.push(
       '-map', ent.video, '-map', ent.audio,
@@ -92,6 +96,9 @@ export function montarArgs(cfg, { estado = 'gravando', saidasExtras = [] } = {})
     '-map', ent.audio, '-c:a', 'pcm_s16le', '-ar', String(cfg.ouvirHz ?? 16000), '-ac', '1',
     '-f', 's16le', 'pipe:1',
   );
-  for (const extra of saidasExtras) args.push(...extra);
+  const extras = typeof saidasExtras === 'function'
+    ? saidasExtras(estado, { video: ent.video, audio: ent.audio })
+    : saidasExtras;
+  for (const extra of extras) args.push(...extra);
   return args;
 }
