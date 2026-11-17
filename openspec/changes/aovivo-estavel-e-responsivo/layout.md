@@ -48,8 +48,12 @@ Trilho da barra (`--borda` sobre `--fundo`) tem ~1,3:1 (claro) e 1,6:1 (escuro),
 7. Barra de som nas 4 larguras com e sem som; trilho ≥ 3:1 contra `--fundo` nos dois temas.
 8. Tab: topo, player, controles, dia, com outline inteiro em 390.
 
-## Decisões da pessoa (pendentes)
-1. Vídeo fixo no celular ao rolar a linha do tempo (recomendado: sim, só em pé com altura ≥ 700: `.ao-vivo { position:sticky; top:<altura do topo>; z-index:10; }`).
-2. Barra de som no topo, larga (recomendado) ou sobre a base do vídeo.
-
-Capturas de hoje: script `cap.cjs` no scratchpad da sessão do cartão (Playwright do andromeda-ui).
+## Decisões da pessoa (2026-11-17)
+1. **Vídeo fixo no celular**: em retrato com altura ≥ 700 px (< 600 px de largura), `.ao-vivo { position:sticky; top:<altura do topo>; z-index:10; }`; a linha do tempo rola por baixo.
+2. **Barra de som sobre a base do vídeo** (escolha da pessoa, contra a recomendação do topo): o `#nivel` sai do topo e vai para dentro do `#player`, como faixa fina na base.
+   - Faixa: altura total ≤ 24 px, com degradê escuro de baixo para cima (`linear-gradient(to top, rgba(0,0,0,.55), transparent)`) para dar contraste sobre imagem clara e escura; o resto do vídeo fica descoberto.
+   - Trilho ~6 px, `rgba(255,255,255,.35)`; preenchimento em verde claro (`#6FD08F`) com borda/sombra escura de 1 px, legível sobre branco e preto (≥ 3:1 nos dois casos).
+   - Rótulo "Som"/"Sem som" pequeno, branco, com `text-shadow`, à esquerda; sem som: trilho vazio visível.
+   - Não cobre o selo "AO VIVO" nem os botões dentro do player (ajustar posições para não sobrepor); `pointer-events:none`.
+   - Some em modo gravação (a barra é do ao vivo) e quando a tela de estado cobre o player (lá já existe o `medidor`).
+   - Critério 7 passa a ser: barra visível na base do player nas 4 larguras, com e sem som; contraste conferido com print sobre área clara e escura do vídeo.

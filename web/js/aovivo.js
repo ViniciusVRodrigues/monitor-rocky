@@ -58,23 +58,36 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     timerConectar = setTimeout(() => { if (modo === 'vivo' && estado === 'gravando') erroVivo(); }, conectarMs);
     video.onplaying = aoTocar;
     video.onerror = erroVivo;
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url;
-      video.play().catch(() => {});
-    } else if (globalThis.Hls?.isSupported()) {
-      hls = new globalThis.Hls({ liveSyncDurationCount: 2, lowLatencyMode: false });
-      hls.on(globalThis.Hls.Events.ERROR, (_e, d) => { if (d.fatal) erroVivo(); });
-      hls.on(globalThis.Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+    const Hls = globalThis.Hls;
+    // hls.js primeiro (o Chrome diz "maybe" ao HLS nativo, mas trava em ~6 s); nativo só sem MSE (iOS).
+    if (Hls?.isSupported()) {
+      let recuperou = false;
+      hls = new Hls({ liveSyncDurationCount: 3, lowLatencyMode: false });
+      hls.on(Hls.Events.ERROR, (_e, d) => {
+        if (!d.fatal) return;
+        if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !recuperou) {
+          recuperou = true;
+          hls.recoverMediaError();
+          return;
+        }
+        erroVivo();
+      });
+      hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
       hls.loadSource(url);
       hls.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.play().catch(() => {});
     } else {
       erroVivo();
     }
   }
 
-  function aplicarEstado(novo, acoes) {
+  function aplicarEstado(novo, acoes, forcar) {
+    const igual = novo === estado;
     estado = novo;
     if (modo === 'gravacao') return; // o estado muda por baixo; a faixa continua
+    if (igual && !forcar) return; // mesmo estado (SSE reconectando, batida): o player não é mexido
     mostrarEstadoVivo(acoes);
   }
 
@@ -84,9 +97,9 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     if (estado === 'gravando') {
       abrirVivo();
     } else if (estado === 'so-som') {
-      mostrarTela('Câmera liberada para você usar. O som continua gravando.', { botao: 'Religar câmera', acao: acoes?.camera, medir: true });
+      mostrarTela('Câmera liberada para você usar. O som continua gravando.', { botao: 'Religar câmera', acao: () => acoesAtuais?.camera?.(), medir: true });
     } else if (estado === 'parado') {
-      mostrarTela('Nada está gravando. Câmera e microfone livres.', { botao: 'Voltar a gravar', acao: acoes?.gravar });
+      mostrarTela('Nada está gravando. Câmera e microfone livres.', { botao: 'Voltar a gravar', acao: () => acoesAtuais?.gravar?.() });
     } else {
       mostrarTela('Estado desconhecido. Esperando o monitor…');
     }
@@ -95,8 +108,8 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
   let acoesAtuais = null;
 
   return {
-    /** Recria o player para o estado (a cada evento `estado`). */
-    aplicar(novo, acoes) { acoesAtuais = acoes; aplicarEstado(novo, acoes); },
+    /** Recria o player só se o estado mudou (ou `forcar`, para pedido da pessoa); senão só atualiza as ações. */
+    aplicar(novo, acoes, { forcar = false } = {}) { acoesAtuais = acoes; aplicarEstado(novo, acoes, forcar); },
 
     /** Toca uma gravação: { urls: [...], soAudio, rotulo } — emenda as urls em sequência. */
     tocar({ urls, soAudio, rotulo }) {

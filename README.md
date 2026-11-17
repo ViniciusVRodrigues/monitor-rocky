@@ -125,7 +125,9 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 | `eventoJuntarSegundos` | 10 | tempo mínimo entre eventos: atividades mais próximas viram um só |
 | `eventoMaxSegundos` | 120 | duração máxima de um evento (barulho contínuo vira vários) |
 | `clipeMargemSegundos` | 10 | espera extra antes de recortar (o trecho em gravação chega ao disco com alguns segundos de atraso) |
-| `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe (é recodificado para cortar certinho) |
+| `clipeCopiar` | `true` | recorta o clipe sem recodificar (corte no quadro-chave, a cada `aovivoSegundos`); `false` recodifica com `clipePreset`/`clipeCrf` para cortar certinho, gastando CPU a cada evento |
+| `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe quando `clipeCopiar` é `false` |
+| `clipePrioridade` | `abaixo` | prioridade do ffmpeg que recorta clipes e miniaturas (mesmos valores de `ffmpegPrioridade`), para não disputar CPU com a captura |
 | `miniaturaLargura` | 320 | largura da miniatura |
 | `clipesDias` | 30 | por quantos dias guardar clipes e registros (inteiro até 36500; `0` = sempre) |
 
@@ -148,8 +150,8 @@ O vigia roda o `npm start` (`src/principal.js`: monitor, detecção e a página 
 | `logMaxMB`, `logArquivos` | 5, 5 | tamanho que dispara a rotação e quantos arquivos antigos manter |
 | `logJanelaSegundos`, `logLinhasPorJanela` | 10, 20 | no máximo tantas linhas do ffmpeg por janela; o excesso vira "N linhas omitidas" e linhas iguais seguidas viram "(repetida N vezes)" |
 | `logFilaMaxKB` | 1024 | fila da escrita do log do vigia; acima disso descarta e conta |
-| `tarefaPrioridade` | 4 | prioridade da tarefa agendada (0 a 10 do Agendador; 4 = normal, o padrão do Windows é 7 = abaixo do normal). Reinstale a tarefa para aplicar |
-| `ffmpegPrioridade` | `acima` | prioridade do ffmpeg de captura: `normal`, `acima` ou `alta`; evita que outra carga deixe a câmera sem CPU |
+| `tarefaPrioridade` | 3 | prioridade da tarefa agendada, herdada pelo vigia e pelo monitor (0 a 10 do Agendador: 1 alta, 2–3 acima do normal, 4–6 normal, 7–8 abaixo; o padrão do Windows é 7). Acima do normal evita que outra carga deixe o Node sem ler as saídas do ffmpeg, o que trava a captura. Reinstale a tarefa para aplicar |
+| `ffmpegPrioridade` | `acima` | prioridade do ffmpeg de captura: `abaixo`, `normal`, `acima` ou `alta`; evita que outra carga deixe a câmera sem CPU |
 | `vigiaEsperaSegundos`, `vigiaEsperaMaxSegundos` | 2, 120 | espera ao subir o monitor de novo (dobra até o máximo) |
 | `vigiaEstavelSegundos` | 60 | tempo de pé que zera a espera |
 | `saudeIntervaloSegundos` | 60 | de quanto em quanto tempo checar câmera e microfone |

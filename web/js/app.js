@@ -208,7 +208,7 @@ async function principal() {
 
   abrirAoVivo({
     aoConexao,
-    aoEstado: (d) => aplicarEstado(d.estado, d.ouvindoPC, d.reiniciando, true),
+    aoEstado: (d) => aplicarEstado(d.estado, d.ouvindoPC, d.reiniciando, false),
     aoEvento: (ev) => dia.novoEvento(ev),
     aoNivel: (n) => {
       ultimoNivel = Date.now();
