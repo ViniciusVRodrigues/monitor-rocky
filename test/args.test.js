@@ -17,7 +17,7 @@ test('abre câmera e microfone num único -i dshow', () => {
 test('uma saída tee com trechos (segment+strftime) e HLS', () => {
   const a = montarArgs(cfg);
   assert.equal(a[a.indexOf('tee') - 1], '-f');
-  const destino = a[a.length - 1];
+  const destino = a[a.indexOf('tee') + 1];
   assert.match(destino, /f=segment/);
   assert.match(destino, /segment_time=60/);
   assert.match(destino, /strftime=1/);
@@ -56,4 +56,50 @@ test('usa global_header (sem ele o MP4 do tee sai sem SPS/PPS e não toca)', () 
 
 test('padraoTrecho é relativo e usa barras', () => {
   assert.equal(padraoTrecho(), 'trechos/%Y-%m-%d/%H-%M-%S.mp4');
+});
+
+test('so-som: só o microfone, sem vídeo, trechos e HLS de áudio', () => {
+  const a = montarArgs(cfg, { estado: 'so-som' });
+  const j = a.join(' ');
+  assert.equal(a[a.indexOf('-i') + 1], 'audio=Microfone (fifine  Microphone)');
+  assert.ok(!j.includes('video='));
+  assert.ok(!j.includes('libx264'));
+  assert.ok(!j.includes('-video_size'));
+  assert.match(j, /-c:a aac/);
+  assert.ok(a[a.indexOf('tee') + 1].includes('trechos/%Y-%m-%d/%H-%M-%S.mp4'));
+});
+
+test('saída PCM por pipe vem depois do tee e antes das extras', () => {
+  const extra = ['-f', 'null', '-'];
+  const a = montarArgs({ ...cfg, ouvirHz: 16000 }, { saidasExtras: [extra] });
+  const pcm = ['-map', '0:a', '-c:a', 'pcm_s16le', '-ar', '16000', '-ac', '1', '-f', 's16le', 'pipe:1'];
+  const i = a.indexOf('pcm_s16le') - 3;
+  assert.deepEqual(a.slice(i, i + pcm.length), pcm);
+  assert.ok(i > a.indexOf('tee'));
+  assert.deepEqual(a.slice(-extra.length), extra);
+});
+
+test('qualidade e áudio vêm da configuração', () => {
+  const j = montarArgs({ ...cfg, crf: 28, preset: 'ultrafast', audioBitrate: '64k', audioHz: 22050 }).join(' ');
+  assert.match(j, /-crf 28/);
+  assert.match(j, /-preset ultrafast/);
+  assert.match(j, /-b:a 64k/);
+  assert.match(j, /-ar 22050/);
+});
+
+test('fonte de teste usa lavfi em tempo real, sem dshow', () => {
+  const a = montarArgs({ ...cfg, fonte: 'teste' });
+  const j = a.join(' ');
+  assert.ok(!j.includes('dshow'));
+  assert.match(j, /-re /);
+  assert.match(j, /testsrc/);
+  assert.match(j, /sine/);
+  assert.match(j, /-map 0:v -map 1:a/);
+  const so = montarArgs({ ...cfg, fonte: 'teste' }, { estado: 'so-som' }).join(' ');
+  assert.ok(!so.includes('testsrc'));
+  assert.match(so, /-map 0:a/);
+});
+
+test('estado parado não tem argumentos', () => {
+  assert.throws(() => montarArgs(cfg, { estado: 'parado' }), /parado/);
 });

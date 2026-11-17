@@ -42,3 +42,14 @@ test('dispositivo vazio gera mensagem em pt-BR sugerindo npm run dispositivos', 
   }
   assert.doesNotThrow(() => validarDispositivos({ video: 'a', audio: 'b' }));
 });
+
+test('valida as chaves novas quando presentes', () => {
+  for (const ruim of [{ fps: 0 }, { estadoInicial: 'voando' }, { canalControle: ' ' }, { ouvirHz: -1 }]) {
+    const raiz = raizTemp({ video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4, ...ruim });
+    try { assert.throws(() => carregarConfig(raiz), ConfigErro); } finally { rmSync(raiz, { recursive: true, force: true }); }
+  }
+});
+
+test('fonte de teste dispensa câmera e microfone', () => {
+  assert.doesNotThrow(() => validarDispositivos({ fonte: 'teste', video: '', audio: '' }));
+});

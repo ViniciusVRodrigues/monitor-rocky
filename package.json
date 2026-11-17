@@ -5,9 +5,16 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/captura.js",
+    "iniciar": "node scripts/controle.js iniciar",
+    "parar": "node scripts/controle.js parar",
+    "estado": "node scripts/controle.js estado",
+    "camera": "node scripts/controle.js camera",
+    "ouvir": "node scripts/controle.js ouvir",
     "dispositivos": "node scripts/dispositivos.js",
     "test": "node --test"
   }
