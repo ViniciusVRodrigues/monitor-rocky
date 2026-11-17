@@ -85,9 +85,48 @@ Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o 
 | `ouvirHz` | 16000 | taxa do áudio ao vivo (PCM mono) |
 | `ouvirComando`, `ouvirArgs` | `ffplay`, `[]` | player do "ouvir no PC" e argumentos extras |
 
+## Eventos: movimento e som (ROCKY-2)
+
+Com `npm start`, o monitor também detecta:
+
+- **Som** (latido, choro): volume (RMS em dBFS) do áudio ao vivo acima de `somLimiarDb` por pelo menos `somDuracaoMinimaMs`. Funciona em `gravando` e em `so-som`.
+- **Movimento**: o mesmo ffmpeg manda quadros cinza pequenos por um pipe nomeado local; conta-se a fração de pixels que mudou entre quadros. Só em `gravando` (com a câmera desligada não há movimento).
+
+Atividades do mesmo tipo mais próximas que `eventoJuntarSegundos` viram um evento só. Cada evento vira um clipe recortado dos trechos (`eventoPreSegundos` antes e `eventoPosSegundos` depois), com miniatura, e uma linha no registro do dia. Os clipes ficam fora do buffer e são apagados depois de `clipesDias` dias (`0` = nunca); os trechos não são tocados.
+
+```
+gravacoes/clipes/AAAA-MM-DD/HH-MM-SS-<tipo>.mp4   # clipe (tipo: movimento | som); HH-MM-SS = início do clipe
+gravacoes/clipes/AAAA-MM-DD/HH-MM-SS-<tipo>.jpg   # miniatura (não existe em clipe só de áudio)
+gravacoes/eventos/AAAA-MM-DD.jsonl                # uma linha por evento
+```
+
+Linha do registro: `{"id","inicio","fim","tipo","intensidade","clipe","miniatura"}`. `inicio`/`fim` em ISO com fuso local (`2026-11-17T14:03:05-03:00`), limites da atividade; `intensidade` de 0 a 1; `clipe`/`miniatura` relativos a `gravacoes/` (ou `null`). No código: `monitor.deteccao.aoEvento(fn)` recebe o mesmo objeto, uma vez por evento, depois de o clipe e a linha estarem gravados.
+
+Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25); de menos, desça (ex.: -40). Para movimento, `movimentoAreaMinima` (fração do quadro) e `movimentoLimiarPixel` (0 a 255).
+
+| Chave | Padrão | Para quê |
+| --- | --- | --- |
+| `deteccao` | `true` | liga a detecção de eventos |
+| `ffprobe` | `ffprobe` | executável usado para ler os trechos |
+| `somLimiarDb` | -30 | volume (dBFS, negativo) acima do qual é som alto |
+| `somJanelaMs` | 100 | tamanho da janela de medição do volume |
+| `somDuracaoMinimaMs` | 200 | quanto tempo seguido acima do limiar para valer (evita clique) |
+| `movimentoLargura`, `movimentoFps` | 160, 5 | tamanho e taxa dos quadros de análise |
+| `movimentoLimiarPixel` | 25 | quanto um pixel precisa mudar (0 a 255) |
+| `movimentoAreaMinima` | 0.01 | fração do quadro que precisa mudar |
+| `movimentoQuadrosSeguidos` | 2 | quadros seguidos com mudança para valer |
+| `movimentoCanal` | `monitor-rocky-movimento` | prefixo do pipe nomeado dos quadros (soma-se o PID) |
+| `eventoPreSegundos`, `eventoPosSegundos` | 5, 5 | quanto o clipe pega antes e depois |
+| `eventoJuntarSegundos` | 10 | tempo mínimo entre eventos: atividades mais próximas viram um só |
+| `eventoMaxSegundos` | 120 | duração máxima de um evento (barulho contínuo vira vários) |
+| `clipeMargemSegundos` | 3 | espera extra antes de recortar (o trecho é gravado em pedaços) |
+| `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe (é recodificado para cortar certinho) |
+| `miniaturaLargura` | 320 | largura da miniatura |
+| `clipesDias` | 30 | por quantos dias guardar clipes e registros (`0` = sempre) |
+
 ### Para os próximos cartões
 
-`import { iniciarMonitor } from './src/captura.js'` devolve `{ gravador, distribuidor, ouvinte, parar }`. `gravador` tem `estado()`, `iniciar()`, `parar()`, `camera('ligar'|'desligar')` e `aoMudar(fn)`. `distribuidor.inscrever(fn)` entrega o áudio PCM s16le mono (`ouvirHz`) e devolve a função de cancelar; o ffmpeg não reinicia ao inscrever ou sair. Aceita `saidasExtras` (saídas extras do ffmpeg, ex.: movimento no ROCKY-2).
+`import { iniciarMonitor } from './src/captura.js'` devolve `{ gravador, distribuidor, ouvinte, deteccao, parar }`. `gravador` tem `estado()`, `iniciar()`, `parar()`, `camera('ligar'|'desligar')` e `aoMudar(fn)`. `distribuidor.inscrever(fn)` entrega o áudio PCM s16le mono (`ouvirHz`) e devolve a função de cancelar; o ffmpeg não reinicia ao inscrever ou sair. Aceita `saidasExtras` (saídas extras do ffmpeg: lista ou função `(estado, { video, audio })`). `deteccao.aoEvento(fn)` avisa cada evento gravado.
 
 ## Rodar sozinho (ROCKY-5)
 
