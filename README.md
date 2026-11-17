@@ -17,7 +17,7 @@ webcam + microfone ──ffmpeg──▶ gravação em trechos (MP4) + ao vivo (
 ```
 
 - **Captura**: `ffmpeg` com DirectShow (Windows). Câmera e microfone configuráveis.
-- **Gravação**: trechos de alguns minutos em disco, com retenção configurável (apaga os mais antigos).
+- **Gravação**: trechos de alguns minutos num buffer das últimas 4 horas (configurável); os eventos viram clipes guardados à parte.
 - **Eventos**: movimento (diferença entre quadros) e som (volume acima do limiar, como latido ou choro), com miniatura.
 - **Web**: ao vivo, linha do tempo do dia com os eventos e reprodução dos trechos.
 - **Acesso remoto**: nada de porta aberta no roteador. O servidor só escuta em `127.0.0.1`; o `cloudflared` cria o túnel e o Cloudflare Access exige login Google antes de chegar ao PC. O servidor também confere o JWT do Access.
