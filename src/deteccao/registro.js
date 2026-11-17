@@ -9,6 +9,9 @@ import { isoLocal, nomeDia, nomeHora } from './tempo.js';
 const RE_DIA = /^(\d{4})-(\d{2})-(\d{2})$/;
 const RE_JSONL = /^(\d{4}-\d{2}-\d{2})\.jsonl$/;
 
+// Nomes já dados nesta execução: um recorte que falhou não deixa .mp4, mas o id não pode se repetir.
+const usados = new Set();
+
 export function caminhosEvento({ pasta, evento, preMs }) {
   const d = new Date(evento.inicio - preMs);
   const dia = nomeDia(d);
@@ -17,10 +20,12 @@ export function caminhosEvento({ pasta, evento, preMs }) {
   mkdirSync(pastaDia, { recursive: true });
   let nome = `${hora}-${evento.tipo}`;
   let n = 1;
-  while (existsSync(join(pastaDia, `${nome}.mp4`))) {
+  const ocupado = (n) => usados.has(join(pastaDia, n)) || existsSync(join(pastaDia, `${n}.mp4`));
+  while (ocupado(nome)) {
     n++;
     nome = `${hora}-${evento.tipo}-${n}`;
   }
+  usados.add(join(pastaDia, nome));
   return {
     id: `${dia}_${nome}`,
     dia,
@@ -55,6 +60,7 @@ export function limparClipes({ pasta, dias, agora = new Date(), log = () => {} }
   let apagados = 0;
   if (!dias || dias <= 0) return { apagados };
   const corte = nomeDia(new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - dias));
+  if (!RE_DIA.test(corte)) { log(`Limpeza de clipes ignorada: "clipesDias" inválido (${dias}).`); return { apagados }; }
   const velho = (dia) => RE_DIA.test(dia) && dia < corte;
 
   let pastas = [];

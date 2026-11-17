@@ -122,7 +122,7 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 | `clipeMargemSegundos` | 10 | espera extra antes de recortar (o trecho em gravação chega ao disco com alguns segundos de atraso) |
 | `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe (é recodificado para cortar certinho) |
 | `miniaturaLargura` | 320 | largura da miniatura |
-| `clipesDias` | 30 | por quantos dias guardar clipes e registros (`0` = sempre) |
+| `clipesDias` | 30 | por quantos dias guardar clipes e registros (inteiro até 36500; `0` = sempre) |
 
 ### Para os próximos cartões
 

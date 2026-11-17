@@ -38,6 +38,7 @@ export function configDeteccao(cfg) {
   const erro = (m) => { throw new ConfigErro(`Configuração inválida: ${m}`); };
   for (const k of POSITIVOS) if (!(Number(c[k]) > 0)) erro(`"${k}" precisa ser um número maior que zero.`);
   for (const k of NAO_NEGATIVOS) if (!(Number(c[k]) >= 0)) erro(`"${k}" precisa ser um número maior ou igual a zero.`);
+  if (!(Number.isInteger(Number(c.clipesDias)) && Number(c.clipesDias) <= 36500)) erro('"clipesDias" precisa ser um número inteiro de dias, até 36500 (0 = nunca apagar).');
   if (!(Number(c.somLimiarDb) < 0)) erro('"somLimiarDb" precisa ser negativo (dBFS, ex.: -30).');
   if (!(c.movimentoLimiarPixel >= 0 && c.movimentoLimiarPixel <= 255)) erro('"movimentoLimiarPixel" vai de 0 a 255.');
   if (!(c.movimentoAreaMinima > 0 && c.movimentoAreaMinima <= 1)) erro('"movimentoAreaMinima" é uma fração entre 0 e 1.');

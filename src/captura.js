@@ -32,7 +32,10 @@ export async function iniciarMonitor(cfg, { saidasExtras = [], canal = true } = 
 
   const distribuidor = criarDistribuidor();
   // A detecção abre o pipe de quadros antes do ffmpeg partir e acrescenta a saída de movimento.
-  const deteccao = cfg.deteccao === false ? null : await iniciarDeteccao(cfg, { log });
+  let deteccao = null;
+  try {
+    if (cfg.deteccao !== false) deteccao = await iniciarDeteccao(cfg, { log });
+  } catch (e) { clearInterval(timer); throw e; }
   const extras = (estado, ent) => [
     ...(typeof saidasExtras === 'function' ? saidasExtras(estado, ent) : saidasExtras),
     ...(deteccao ? deteccao.saidasExtras(estado, ent) : []),

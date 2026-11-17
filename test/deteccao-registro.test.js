@@ -110,3 +110,25 @@ test('limparClipes: dias = 0 não apaga nada; pasta inexistente não quebra', ()
     assert.deepEqual(limparClipes({ pasta: join(pasta, 'nada'), dias: 30 }), { apagados: 0 });
   } finally { rmSync(pasta, { recursive: true, force: true }); }
 });
+
+test('limparClipes: dias absurdo (data inválida) não apaga nada', () => {
+  const pasta = mkdtempSync(join(tmpdir(), 'rocky reg '));
+  try {
+    mkdirSync(join(pasta, 'clipes', '2099-01-01'), { recursive: true });
+    mkdirSync(join(pasta, 'eventos'), { recursive: true });
+    writeFileSync(join(pasta, 'eventos', '2020-01-01.jsonl'), '{}\n');
+    assert.deepEqual(limparClipes({ pasta, dias: 1e9 }), { apagados: 0 });
+    assert.ok(existsSync(join(pasta, 'clipes', '2099-01-01')));
+    assert.ok(existsSync(join(pasta, 'eventos', '2020-01-01.jsonl')));
+  } finally { rmSync(pasta, { recursive: true, force: true }); }
+});
+
+test('caminhosEvento: id não se repete quando o recorte anterior falhou (sem .mp4)', () => {
+  const pasta = mkdtempSync(join(tmpdir(), 'rocky-reg-'));
+  try {
+    const evento = { tipo: 'som', inicio: new Date(2026, 10, 17, 15, 0, 5).getTime(), fim: 0 };
+    const a = caminhosEvento({ pasta, evento, preMs: 5000 });
+    const b = caminhosEvento({ pasta, evento, preMs: 5000 });
+    assert.notEqual(a.id, b.id);
+  } finally { rmSync(pasta, { recursive: true, force: true }); }
+});
