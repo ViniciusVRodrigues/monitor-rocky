@@ -79,10 +79,15 @@ Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o 
 | `bufferHoras` | 4 | quanto tempo de trechos manter |
 | `limpezaMinutos` | 5 | de quanto em quanto tempo limpar |
 | `aovivoSegundos`, `aovivoSegmentos` | 2, 6 | tamanho e quantidade de pedaços do HLS |
+| `aovivoConectarSegundos` | 15 | quanto esperar o ao vivo tocar na página antes de mostrar "Tentar agora" |
 | `esperaReinicioSegundos`, `esperaReinicioMaxSegundos` | 1, 60 | espera ao reiniciar o ffmpeg (dobra até o máximo) |
 | `estadoInicial` | `gravando` | estado se não houver `estado.json` |
 | `canalControle` | `monitor-rocky` | nome do pipe de controle |
-| `ouvirHz` | 16000 | taxa do áudio ao vivo (PCM mono) |
+| `ouvirHz` | 24000 | taxa do áudio ao vivo (PCM mono); a detecção e o nível usam a mesma, e os dB medidos não mudam com ela |
+| `ouvirGanhoDb` | 18 | ganho (dB) do som na página, PCM e MP3 (GainNode); 0 = sem ganho |
+| `ouvirCompLimiarDb`, `ouvirCompJoelhoDb`, `ouvirCompRazao` | -18, 12, 12 | compressor depois do ganho, para um latido alto não estourar |
+| `ouvirPcGanhoDb` | 18 | ganho (dB) do "ouvir no PC" (`ffplay -af volume`, com limitador); 0 = sem filtro |
+| `saudeTimeoutMs` | 10000 | tempo máximo da checagem de dispositivos; passou, o ffmpeg é morto |
 | `ouvirComando`, `ouvirArgs` | `ffplay`, `[]` | player do "ouvir no PC" e argumentos extras |
 
 ## Eventos: movimento e som (ROCKY-2)

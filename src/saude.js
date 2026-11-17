@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn as spawnPadrao } from 'node:child_process';
 import { parsearDispositivos } from './dispositivos.js';
 import { enviarToast } from './toast.js';
 
@@ -10,15 +10,25 @@ const TEXTOS = {
   captura: ['A captura está falhando seguidas vezes.', 'A captura voltou ao normal.'],
 };
 
-/** Lista os dispositivos DirectShow (o ffmpeg escreve no stderr). Só lista: não abre a câmera. */
-function listarAssincrono(ffmpeg) {
+/**
+ * Lista os dispositivos DirectShow (o ffmpeg escreve no stderr). Só lista: não abre a câmera.
+ * Se o ffmpeg não terminar em `timeoutMs`, ele é morto e a promessa rejeita: nenhum
+ * `ffmpeg -list_devices` fica preso.
+ */
+export function listarDispositivos({ ffmpeg, timeoutMs = 10000, spawn = spawnPadrao }) {
   return new Promise((resolve, reject) => {
     const f = spawn(ffmpeg, ['-hide_banner', '-list_devices', 'true', '-f', 'dshow', '-i', 'dummy'], { windowsHide: true });
     let saida = '';
-    f.stdout.on('data', (d) => { saida += d; });
-    f.stderr.on('data', (d) => { saida += d; });
-    f.on('error', reject);
-    f.on('close', () => resolve(saida));
+    let fim = false;
+    const terminar = (fn, v) => { if (fim) return; fim = true; clearTimeout(timer); fn(v); };
+    const timer = setTimeout(() => {
+      try { f.kill(); } catch { /* já morreu */ }
+      terminar(reject, new Error(`A checagem de dispositivos estourou o tempo (${timeoutMs / 1000} s) e foi cancelada.`));
+    }, timeoutMs);
+    f.stdout?.on('data', (d) => { saida += d; });
+    f.stderr?.on('data', (d) => { saida += d; });
+    f.on('error', (e) => terminar(reject, e));
+    f.on('close', () => terminar(resolve, saida));
   });
 }
 
@@ -50,7 +60,8 @@ export function ehFalhaDoFfmpeg(linha) {
  */
 export function criarSaude({
   cfg, aoAlerta = () => {}, toast = true, log = console.log,
-  listar = () => listarAssincrono(cfg.ffmpeg),
+  listarComTempo = listarDispositivos,
+  listar = () => listarComTempo({ ffmpeg: cfg.ffmpeg, timeoutMs: Number(cfg.saudeTimeoutMs ?? 10000) }),
   lerEstado = () => {
     try { return JSON.parse(readFileSync(join(cfg.pasta, 'estado.json'), 'utf8')).estado; } catch { return cfg.estadoInicial ?? 'gravando'; }
   },

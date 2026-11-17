@@ -17,11 +17,17 @@
   "limpezaMinutos": 5,
   "aovivoSegundos": 2,
   "aovivoSegmentos": 6,
+  "aovivoConectarSegundos": 15,
   "esperaReinicioSegundos": 1,
   "esperaReinicioMaxSegundos": 60,
   "estadoInicial": "gravando",
   "canalControle": "monitor-rocky",
-  "ouvirHz": 16000,
+  "ouvirHz": 24000,
+  "ouvirGanhoDb": 18,
+  "ouvirCompLimiarDb": -18,
+  "ouvirCompJoelhoDb": 12,
+  "ouvirCompRazao": 12,
+  "ouvirPcGanhoDb": 18,
   "ouvirComando": "ffplay",
   "ouvirArgs": [],
   "servicoNome": "monitor-rocky",
@@ -69,5 +75,6 @@
   "nivelHz": 10,
   "nivelSuavizacao": 0.6,
   "nivelPisoDb": -60,
-  "somAoAbrir": true
+  "somAoAbrir": true,
+  "saudeTimeoutMs": 10000
 }

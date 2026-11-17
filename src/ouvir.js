@@ -2,9 +2,13 @@ import { spawn } from 'node:child_process';
 
 /** Argumentos do player (ffplay) para tocar o PCM do pipe com pouco atraso. */
 export function argsOuvir(cfg) {
+  const ganho = Number(cfg.ouvirPcGanhoDb ?? 0);
+  // Ganho + limitador: sem ele um latido alto estoura (clipa) nas caixas.
+  const filtro = ganho ? ['-af', `volume=${ganho}dB,alimiter=limit=0.9`] : [];
   return [
     '-nodisp', '-autoexit', '-loglevel', 'quiet',
     '-fflags', 'nobuffer', '-flags', 'low_delay', '-probesize', '32', '-analyzeduration', '0',
+    ...filtro,
     ...(cfg.ouvirArgs ?? []),
     '-f', 's16le', '-sample_rate', String(cfg.ouvirHz ?? 16000), '-ch_layout', 'mono',
     '-i', 'pipe:0',

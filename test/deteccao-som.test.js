@@ -103,3 +103,16 @@ test('som de exatamente a duração mínima gera atividade do início ao fim da 
   assert.ok(Math.abs(Math.min(...t) - 1000) < 1);
   assert.ok(Math.abs(Math.max(...t) - 1200) < 1);
 });
+
+test('a taxa do ouvir não muda os dB medidos (mesma senoide a 16 kHz e a 32 kHz)', () => {
+  const medir = (hz) => {
+    const v = [];
+    const d = criarDetectorSom({ hz, limiarDb: -60, janelaMs: 100, duracaoMinimaMs: 100, aoAtividade: (t, i) => v.push(i) });
+    const n = hz; // 1 s
+    const b = Buffer.alloc(n * 2);
+    for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(3000 * Math.sin((2 * Math.PI * 440 * i) / hz)), i * 2);
+    d.processar(b, 1000);
+    return v[v.length - 1];
+  };
+  assert.ok(Math.abs(medir(16000) - medir(32000)) < 0.01);
+});

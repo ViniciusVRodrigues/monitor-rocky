@@ -11,7 +11,7 @@ const NUMEROS_POSITIVOS = [
   'saudeIntervaloSegundos', 'alertaFalhasSeguidas', 'alertaEstavelSegundos',
   'servidorPorta', 'ouvirSiteMax', 'ouvirFolgaMs', 'ouvirAtrasoMaxMs',
   'ouvirMp3AtrasoMaxSegundos', 'sseBatidaSegundos', 'linhaTempoAtualizarSegundos',
-  'controleTempoLimiteSegundos', 'nivelHz',
+  'controleTempoLimiteSegundos', 'nivelHz', 'saudeTimeoutMs', 'aovivoConectarSegundos', 'ouvirCompRazao',
 ];
 const ESTADOS_INICIAIS = ['gravando', 'so-som', 'parado'];
 
@@ -71,6 +71,11 @@ export function carregarConfig(raiz) {
   }
   if (cfg.somAoAbrir !== undefined && typeof cfg.somAoAbrir !== 'boolean') {
     throw new ConfigErro('Configuração inválida: "somAoAbrir" precisa ser true ou false.');
+  }
+  for (const k of ['ouvirGanhoDb', 'ouvirPcGanhoDb', 'ouvirCompLimiarDb', 'ouvirCompJoelhoDb']) {
+    if (cfg[k] !== undefined && !(typeof cfg[k] === 'number' && Number.isFinite(cfg[k]))) {
+      throw new ConfigErro(`Configuração inválida: "${k}" precisa ser um número (dB).`);
+    }
   }
   cfg.pasta = isAbsolute(cfg.pasta) ? cfg.pasta : resolve(raiz, cfg.pasta);
   return cfg;
