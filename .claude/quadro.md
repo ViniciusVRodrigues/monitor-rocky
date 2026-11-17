@@ -10,6 +10,7 @@
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
+- **ROCKY-10: som claro e correções** (Sonnet) — issue #11, change `som-claro-e-correcoes`. Ganho e taxa do som do site, "Voltar ao ao vivo" bugado, ffmpeg -list_devices preso na saúde.
 
 ## Feito
 - **ROCKY-3: servidor e página** (2026-11-17) — PR #10, issue #5 fechada, specs `servidor` e `pagina`, 172 testes. Ao vivo HLS, som ligado com Silenciar, barra de nível, controles com confirmação, linha do tempo. Falta testar no celular real (tela apagada, atraso, Safari/iOS). ROCKY-4: pôr `rocky.vvr.dev.br` em `hostsPermitidos`.
