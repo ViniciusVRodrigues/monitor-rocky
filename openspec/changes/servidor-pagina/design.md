@@ -95,7 +95,7 @@ Corpo: `{ "acao": "gravar" | "parar" | "camera-desligar" | "camera-ligar" | "ouv
 ```json
 { "dias": ["2026-11-17", "2026-11-16"], "hoje": "2026-11-17" }
 ```
-São os dias com pasta em `trechos/` ou `clipes/`, ou com arquivo em `eventos/`, em ordem decrescente. `hoje` sempre vem, mesmo que vazio.
+São os dias com pasta em `trechos/` ou `clipes/`, ou com arquivo em `eventos/`, mais hoje (que sempre entra), sem dias futuros, em ordem decrescente.
 
 ### `GET /api/dia/AAAA-MM-DD` → 200 (400 se o dia for inválido)
 ```json

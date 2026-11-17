@@ -53,3 +53,18 @@ test('valida as chaves novas quando presentes', () => {
 test('fonte de teste dispensa câmera e microfone', () => {
   assert.doesNotThrow(() => validarDispositivos({ fonte: 'teste', video: '', audio: '' }));
 });
+
+test('chaves do servidor e do nível do som são validadas', () => {
+  const base = { trechoSegundos: 60, bufferHoras: 4, pasta: 'gravacoes' };
+  const ruins = [
+    { servidorPorta: 0 }, { ouvirSiteMax: -1 }, { nivelHz: 0 }, { ouvirModo: 'wav' },
+    { hostsPermitidos: 'a.com' }, { hostsPermitidos: [1] }, { nivelSuavizacao: 1 }, { nivelSuavizacao: -0.1 },
+    { nivelPisoDb: 0 }, { nivelPisoDb: '-60' }, { somAoAbrir: 'sim' },
+  ];
+  for (const r of ruins) {
+    const raiz = raizTemp({ ...base, ...r });
+    try { assert.throws(() => carregarConfig(raiz), ConfigErro, JSON.stringify(r)); } finally { rmSync(raiz, { recursive: true, force: true }); }
+  }
+  const raiz = raizTemp({ ...base, servidorPorta: 8321, ouvirModo: 'mp3', hostsPermitidos: ['a.com'], nivelSuavizacao: 0, nivelPisoDb: -50, somAoAbrir: false });
+  try { assert.equal(carregarConfig(raiz).ouvirModo, 'mp3'); } finally { rmSync(raiz, { recursive: true, force: true }); }
+});

@@ -150,6 +150,30 @@ O vigia roda o `npm start` (`src/captura.js`); se ele cair, sobe de novo com esp
 
 Ao parar o vigia, o monitor e o ffmpeg são encerrados à força (o último trecho, de até `trechoSegundos`, pode ficar incompleto).
 
+## Servidor e página (ROCKY-3)
+
+`npm install` (uma vez, traz o `hls.js`) e `npm start` sobem a captura e o servidor HTTP, que escuta só em `127.0.0.1`. Abra `http://127.0.0.1:8321/`. Acesso de fora só pelo túnel (ROCKY-4). Ctrl+C encerra tudo.
+
+Chaves novas do `config.json` (sobrepostas por `config.local.json`):
+
+| Chave | Padrão | Para quê |
+| --- | --- | --- |
+| `servidorPorta` | 8321 | porta do servidor (sempre em 127.0.0.1) |
+| `hostsPermitidos` | `[]` | hosts extras aceitos no cabeçalho Host (ex.: o domínio do túnel) |
+| `ouvirModo` | `auto` | `auto`, `pcm` ou `mp3` |
+| `ouvirSiteMax` | 4 | ouvintes simultâneos do site, por modo |
+| `ouvirMp3Bitrate` | `32k` | bitrate do MP3 ao vivo |
+| `ouvirFolgaMs` | 300 | folga do tocador PCM |
+| `ouvirAtrasoMaxMs` | 1000 | atraso máximo do PCM antes de descartar |
+| `ouvirMp3AtrasoMaxSegundos` | 4 | atraso máximo do MP3 antes de saltar ou recarregar |
+| `sseBatidaSegundos` | 15 | batida do fluxo de eventos |
+| `linhaTempoAtualizarSegundos` | 30 | recarga do dia de hoje |
+| `controleTempoLimiteSegundos` | 20 | tempo máximo de um controle |
+| `nivelHz` | 10 | quantas vezes por segundo o nível do som vai para a página |
+| `nivelSuavizacao` | 0.6 | queda suave da barra (0 a menos de 1); a subida é imediata |
+| `nivelPisoDb` | -60 | dBFS que vira barra vazia |
+| `somAoAbrir` | true | a página abre com o som ao vivo ligado |
+
 ## Estado
 
 Em construção. Especificação e decisões em [`openspec/`](openspec/). Licença MIT.

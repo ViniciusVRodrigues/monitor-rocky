@@ -54,5 +54,20 @@
   "clipePreset": "veryfast",
   "clipeCrf": 26,
   "miniaturaLargura": 320,
-  "clipesDias": 30
+  "clipesDias": 30,
+  "servidorPorta": 8321,
+  "hostsPermitidos": [],
+  "ouvirModo": "auto",
+  "ouvirSiteMax": 4,
+  "ouvirMp3Bitrate": "32k",
+  "ouvirFolgaMs": 300,
+  "ouvirAtrasoMaxMs": 1000,
+  "ouvirMp3AtrasoMaxSegundos": 4,
+  "sseBatidaSegundos": 15,
+  "linhaTempoAtualizarSegundos": 30,
+  "controleTempoLimiteSegundos": 20,
+  "nivelHz": 10,
+  "nivelSuavizacao": 0.6,
+  "nivelPisoDb": -60,
+  "somAoAbrir": true
 }
