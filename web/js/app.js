@@ -42,6 +42,7 @@ let timerVoltou = null;
 function mostrarOffline(sem) {
   $('faixa-offline').hidden = !sem;
   $('conexao').textContent = sem ? 'Sem conexão' : 'Conectado';
+  $('conexao').dataset.ok = sem ? 'nao' : 'sim';
 }
 
 function anunciar(texto) {
@@ -100,6 +101,7 @@ async function principal() {
     reiniciando = Boolean(reinicia);
     pintarChip();
     pintarNivel();
+    pintarSom();
     controles.atualizar(estado, ouvindoPC);
     if (mudou || forcar) player.aplicar(estado, acoes);
     if (mudou) anunciar(CHIPS[estado]?.texto ?? '');
@@ -110,18 +112,27 @@ async function principal() {
   const mini = $('ouvir-mini');
   const toque = $('toque-ouvir');
   let ligouPorGesto = 0;
+  let somEst = 'desligado';
+  let somTexto = btnOuvir.querySelector('.rotulo').textContent;
+  // Em "parado" não há o que ouvir: o botão fica desativado com o motivo, em vez de "Conectando…".
+  function pintarSom() {
+    const parado = estado === 'parado';
+    for (const b of [btnOuvir, mini]) {
+      b.querySelector('.rotulo').textContent = parado ? 'Sem som · nada gravando' : somTexto;
+      b.disabled = parado;
+      b.classList.toggle('ocupado', !parado && somEst === 'conectando');
+      b.classList.toggle('com-erro', !parado && (somEst === 'erro' || somEst === 'falhou'));
+      b.classList.toggle('silenciado', parado || somEst === 'desligado' || somEst === 'bloqueado');
+    }
+    toque.hidden = parado || somEst !== 'bloqueado';
+  }
   const ouvir = criarOuvir({
     cfg,
     aoMudar(est, texto) {
-      for (const b of [btnOuvir, mini]) {
-        const r = b.querySelector('.rotulo');
-        r.textContent = texto;
-        b.classList.toggle('ocupado', est === 'conectando');
-        b.classList.toggle('com-erro', est === 'erro' || est === 'falhou');
-        b.classList.toggle('silenciado', est === 'desligado' || est === 'bloqueado');
-      }
-      toque.hidden = est !== 'bloqueado';
-      anunciar(texto);
+      somEst = est;
+      somTexto = texto;
+      pintarSom();
+      if (estado !== 'parado') anunciar(texto);
     },
   });
 

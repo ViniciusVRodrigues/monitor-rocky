@@ -97,7 +97,8 @@ export function criarControles({ cfg, enviar, aoResultado, anunciar, extras = []
     confirma.hidden = false;
     btnCancelar.focus();
     clearTimeout(timerConfirma);
-    timerConfirma = setTimeout(() => fecharConfirma(false), CONFIRMA_MS);
+    // Ao sumir sozinha, devolve o foco ao botão se ele estava na confirmação (WCAG 2.4.3).
+    timerConfirma = setTimeout(() => fecharConfirma(confirma.contains(document.activeElement)), CONFIRMA_MS);
   }
 
   btnCamera.addEventListener('click', () => executar(acaoCamera(), btnCamera));
