@@ -132,7 +132,7 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 
 `npm run instalar-servico` cria uma **tarefa agendada** do Windows (nome em `servicoNome`) que sobe o vigia (`src/vigia.js`) sem janela quando você entra no Windows. É tarefa e não serviço porque serviços rodam na sessão 0, que não enxerga a câmera (DirectShow) nem mostra toast. Rodar de novo substitui a tarefa. `npm run remover-servico` remove a tarefa e encerra o vigia que estiver rodando. Para subir agora sem sair da conta: `schtasks /Run /TN monitor-rocky`.
 
-O vigia roda o `npm start` (`src/captura.js`); se ele cair, sobe de novo com espera crescente. Tudo vai para `logs/monitor.log` (rotaciona por tamanho). Também dá para rodá-lo à mão: `npm run vigia`.
+O vigia roda o `npm start` (`src/principal.js`: monitor, detecção e a página em `http://127.0.0.1:<servidorPorta>/`); se ele cair, sobe de novo com espera crescente. Tudo vai para `logs/monitor.log` (rotaciona por tamanho). Também dá para rodá-lo à mão: `npm run vigia`.
 
 **Alertas**: se a câmera ou o microfone somem (o ffmpeg falha `alertaFalhasSeguidas` vezes seguidas, ou o dispositivo não aparece na lista do DirectShow, checada a cada `saudeIntervaloSegundos`), o vigia mostra um toast do Windows e grava `gravacoes/saude.json` (`{"camera":"ok|sumiu","microfone":"ok|sumiu","captura":"ok|falhando","atualizadoEm":...}`) para a página mostrar. Em `parado` não há verificação; em `so-som` a câmera não é verificada. Gancho para o celular (ROCKY-6): `criarSaude({ aoAlerta })` em `src/saude.js` recebe `{ tipo, problema, mensagem, em }` a cada problema e recuperação.
 

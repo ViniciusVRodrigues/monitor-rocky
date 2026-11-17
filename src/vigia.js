@@ -64,7 +64,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     const timerSaude = setInterval(() => saude.verificar().catch(() => {}), (cfg.saudeIntervaloSegundos ?? 60) * 1000);
     const v = vigiar({
       comando: process.execPath,
-      args: [join(raiz, 'src', 'captura.js')],
+      args: [join(raiz, 'src', 'principal.js')],
       opcoes: { cwd: raiz },
       log,
       aoLinha: (l) => saude.registrarLinha(l),
