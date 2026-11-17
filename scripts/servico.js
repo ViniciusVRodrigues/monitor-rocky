@@ -26,7 +26,8 @@ try {
 
   if (acao === 'instalar') {
     mkdirSync(pastaLog, { recursive: true });
-    writeFileSync(vbs, montarVbs({ node: process.execPath, vigia: join(raiz, 'src', 'vigia.js'), raiz }));
+    // UTF-16 com BOM: o wscript lê ANSI por padrão e quebraria caminhos com acento
+    writeFileSync(vbs, `﻿${montarVbs({ node: process.execPath, vigia: join(raiz, 'src', 'vigia.js'), raiz })}`, 'utf16le');
     const usuario = `${process.env.USERDOMAIN ?? ''}\\${process.env.USERNAME ?? ''}`.replace(/^\\/, '');
     const xml = montarTarefaXml({ usuario, vbs, descricao: 'Monitor Rocky: sobe o vigia da babá eletrônica no logon.' });
     writeFileSync(tarefa.criar[4], `﻿${xml}`, 'utf16le');
@@ -45,7 +46,8 @@ try {
     const arqPid = join(pastaLog, 'vigia.pid');
     try {
       const pid = Number(readFileSync(arqPid, 'utf8'));
-      if (pid > 0) {
+      const vivo = pid > 0 && /node.exe/i.test(spawnSync('tasklist', ['/FI', `PID eq ${pid}`, '/NH'], { encoding: 'utf8', windowsHide: true }).stdout ?? '');
+      if (vivo) {
         spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true });
         console.log('Vigia e monitor em execução foram encerrados.');
       }
