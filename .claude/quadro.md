@@ -3,13 +3,13 @@
 ## A fazer
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
-| ROCKY-2 (#4) | Detecção de eventos: movimento e som (latido/choro) com limiar configurável; recorta clipe do evento (pré e pós) a partir dos trechos, com miniatura e registro em JSON | Opus | ROCKY-1 |
-| ROCKY-3 (#5) | Servidor e página web: ao vivo (HLS), botão "Ouvir" com pouco atraso (segue com a tela do celular apagada), botões de gravar/parar/câmera e ouvir no PC, linha do tempo do dia com eventos, reprodução dos trechos; só 127.0.0.1; responsivo para celular | Opus (tem tela) | ROCKY-1 |
 | ROCKY-4 | Acesso remoto: Cloudflare Tunnel (cloudflared como serviço) + Cloudflare Access com Google; servidor valida o JWT do Access | Opus (segurança) | ROCKY-3 |
-| ROCKY-5 (#6) | Rodar sozinho: iniciar com o Windows, reiniciar se cair, alerta quando a câmera some | Sonnet | ROCKY-1 |
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram) | Opus | ROCKY-2, ROCKY-4 |
 
 ## Fazendo
+- **ROCKY-2 (#4): detecção de eventos** (Opus) — sessão iniciada em 2026-11-17.
+- **ROCKY-3 (#5): servidor e página web** (Opus) — sessão iniciada em 2026-11-17.
+- **ROCKY-5 (#6): rodar sozinho no Windows** (Sonnet) — sessão iniciada em 2026-11-17.
 
 ## Feito
 - **ROCKY-1: captura e gravação** (2026-11-17) — PR #2 e #3 (change arquivada em `openspec/specs/captura`), issue #1 fechada, 56 testes. Estados gravando/só som/parado, controle por pipe (`npm run iniciar|parar|estado|camera|ouvir`), distribuidor de PCM ao vivo. Câmera DirectShow é exclusiva: liberar é pelo só som. Falta conferir com a pessoa o "ouvir no PC" nas caixas reais.
