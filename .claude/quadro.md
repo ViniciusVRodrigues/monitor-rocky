@@ -3,7 +3,7 @@
 ## A fazer
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
-| ROCKY-4 | Acesso remoto: Cloudflare Tunnel (cloudflared como serviço) + Cloudflare Access com Google; servidor valida o JWT do Access | Opus (segurança) | ROCKY-3 |
+| ROCKY-4 | Acesso remoto por Tailscale (Serve com HTTPS, rede privada; a pessoa e um convidado, celular e PC do trabalho); sem Cloudflare | Opus (segurança) | ROCKY-11 |
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram) | Opus | ROCKY-2, ROCKY-4 |
 | ROCKY-7 | Timeout no recorte de clipe do ffmpeg (um recorte travado segura a fila) + achar o teste intermitente (1 falha em 3 rodadas no main em 2026-11-17) | Sonnet | — |
 | ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
@@ -28,6 +28,8 @@
 - Controle fácil: iniciar, parar e desligar só a câmera (segue o som), para poder usar a câmera em outros apps; tentar compartilhar a câmera sem desligar. Botões na página no ROCKY-3. Liberar a câmera é só por botão (sem agenda).
 - Tudo configurável (config.json + config.local.json), nada fixo no código.
 - Ouvir o som ao vivo, ligável: no site (pouco atraso) e nas caixas do PC.
+
+- Acesso de fora: **Tailscale** (2026-11-17), não Cloudflare. Motivo: os termos da Cloudflare restringem vídeo pelo túnel no plano grátis (risco de limitar a conta da zona vvr.dev.br). Duas pessoas ao mesmo tempo: sim (até 6 usuários).
 
 ## Em aberto
 - Quais e-mails Google podem ver (além do da pessoa).
