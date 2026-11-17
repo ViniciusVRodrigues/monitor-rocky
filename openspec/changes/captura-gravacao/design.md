@@ -27,3 +27,9 @@ O mesmo ffmpeg ganha uma saída extra `-f s16le pipe:1` (PCM 16 bits, mono, `ouv
 ## Fonte de teste
 
 `fonte: "teste"` troca o DirectShow por `lavfi` (padrão de teste + tom), em tempo real, para provar estados, pipe e `ouvir` sem câmera.
+
+## Teste de compartilhamento (2026-11-17, FHD Camera, Windows 11)
+
+- Com o app Câmera do Windows aberto, o ffmpeg não abriu a câmera ("Could not run graph / device already in use"): o app prende o dispositivo.
+- Com o monitor capturando, um segundo `ffmpeg -f dshow -i video="FHD Camera"` falhou com "Error opening input: I/O error": o ffmpeg também prende o dispositivo.
+- Conclusão: sem configuração de sistema, não há compartilhamento. Para usar a câmera em outro app, use `npm run camera -- desligar` (estado `so-som`) e depois `ligar`.
