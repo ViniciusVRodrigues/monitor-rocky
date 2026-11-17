@@ -5,12 +5,15 @@
 |---|---|---|---|
 | ROCKY-4 | Acesso remoto: Cloudflare Tunnel (cloudflared como serviço) + Cloudflare Access com Google; servidor valida o JWT do Access | Opus (segurança) | ROCKY-3 |
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram) | Opus | ROCKY-2, ROCKY-4 |
+| ROCKY-7 | Timeout no recorte de clipe do ffmpeg (um recorte travado segura a fila) | Sonnet | — |
+| ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
+| ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
-- **ROCKY-2 (#4): detecção de eventos** (Opus) — sessão iniciada em 2026-11-17.
 - **ROCKY-3 (#5): servidor e página web** (Opus) — sessão iniciada em 2026-11-17.
 
 ## Feito
+- **ROCKY-2: detecção de eventos** (2026-11-17) — PR #8 e #9, issue #4 fechada, spec em `openspec/specs/deteccao`, 124 testes. Clipes em `gravacoes/clipes/`, registro em `gravacoes/eventos/*.jsonl`, `aoEvento`. Microfone quase mudo no teste (média -91 dB): conferir o ganho com a pessoa.
 - **ROCKY-5: rodar sozinho** (2026-11-17) — PR #7, issue #6 fechada, spec em `openspec/specs/rodar-sozinho`, 71 testes. `npm run instalar-servico`/`remover-servico` (tarefa no logon), vigia com log rotativo, alerta de câmera/mic sumidos com gancho `aoAlerta`. A tarefa ainda não foi instalada de verdade (fazer quando o ROCKY-3 entrar).
 - **ROCKY-1: captura e gravação** (2026-11-17) — PR #2 e #3 (change arquivada em `openspec/specs/captura`), issue #1 fechada, 56 testes. Estados gravando/só som/parado, controle por pipe (`npm run iniciar|parar|estado|camera|ouvir`), distribuidor de PCM ao vivo. Câmera DirectShow é exclusiva: liberar é pelo só som. Falta conferir com a pessoa o "ouvir no PC" nas caixas reais.
 - **ROCKY-0: workspace** (2026-11-17) — repositório público, OpenSpec, README, CLAUDE.md, quadro.
