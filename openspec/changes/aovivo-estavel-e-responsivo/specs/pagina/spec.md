@@ -7,6 +7,10 @@ A página SHALL recriar o player do ao vivo só quando o estado da captura muda 
 - **WHEN** o SSE reconecta ou manda o mesmo estado de novo
 - **THEN** o vídeo continua tocando sem recarregar
 
+#### Scenario: Navegador com HLS nativo e MSE
+- **WHEN** o navegador tem MSE (hls.js suportado) e também diz tocar HLS nativo (Chrome 14x+)
+- **THEN** a página usa o hls.js; o HLS nativo fica só para quem não tem MSE (Safari no iPhone)
+
 ### Requirement: Vídeo ocupa a tela
 O vídeo do ao vivo SHALL ocupar a maior área possível mantendo a proporção, em 390, 768, 1280 e 1920 px de largura, sem rolagem horizontal, com os controles e a linha do tempo acessíveis.
 

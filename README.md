@@ -72,7 +72,7 @@ Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o 
 | `pasta` | `gravacoes` | onde gravar (relativa à raiz ou absoluta) |
 | `ffmpeg` | `ffmpeg` | executável |
 | `resolucao` | `1280x720` | tamanho do vídeo |
-| `fpsCamera` / `fps` | 30 / 15 | o que a câmera entrega / o que é gravado |
+| `fpsCamera` / `fps` | `null` / 15 | o que a câmera entrega / o que é gravado; `null` abre a câmera no próprio `fps` (sem decodificar quadros jogados fora). Ponha um número se a câmera não aceitar |
 | `preset`, `crf` | `veryfast`, 23 | qualidade do H.264 (crf menor = melhor) |
 | `audioBitrate`, `audioHz`, `audioCanais` | `96k`, 44100, 1 | áudio AAC gravado |
 | `trechoSegundos` | 60 | duração de cada trecho |
@@ -146,6 +146,10 @@ O vigia roda o `npm start` (`src/principal.js`: monitor, detecção e a página 
 | `servicoNome` | `monitor-rocky` | nome da tarefa agendada |
 | `logPasta` | `logs` | pasta do log do vigia |
 | `logMaxMB`, `logArquivos` | 5, 5 | tamanho que dispara a rotação e quantos arquivos antigos manter |
+| `logJanelaSegundos`, `logLinhasPorJanela` | 10, 20 | no máximo tantas linhas do ffmpeg por janela; o excesso vira "N linhas omitidas" e linhas iguais seguidas viram "(repetida N vezes)" |
+| `logFilaMaxKB` | 1024 | fila da escrita do log do vigia; acima disso descarta e conta |
+| `tarefaPrioridade` | 4 | prioridade da tarefa agendada (0 a 10 do Agendador; 4 = normal, o padrão do Windows é 7 = abaixo do normal). Reinstale a tarefa para aplicar |
+| `ffmpegPrioridade` | `acima` | prioridade do ffmpeg de captura: `normal`, `acima` ou `alta`; evita que outra carga deixe a câmera sem CPU |
 | `vigiaEsperaSegundos`, `vigiaEsperaMaxSegundos` | 2, 120 | espera ao subir o monitor de novo (dobra até o máximo) |
 | `vigiaEstavelSegundos` | 60 | tempo de pé que zera a espera |
 | `saudeIntervaloSegundos` | 60 | de quanto em quanto tempo checar câmera e microfone |
@@ -176,7 +180,7 @@ Chaves novas do `config.json` (sobrepostas por `config.local.json`):
 | `controleTempoLimiteSegundos` | 20 | tempo máximo de um controle |
 | `nivelHz` | 10 | quantas vezes por segundo o nível do som vai para a página |
 | `nivelSuavizacao` | 0.6 | queda suave da barra (0 a menos de 1); a subida é imediata |
-| `nivelPisoDb` | -60 | dBFS que vira barra vazia |
+| `nivelPisoDb`, `nivelTetoDb` | -80, -20 | dBFS que vira barra vazia / barra cheia |
 | `somAoAbrir` | true | a página abre com o som ao vivo ligado |
 
 ## Estado

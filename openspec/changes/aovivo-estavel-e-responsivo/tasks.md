@@ -8,7 +8,7 @@
 - [ ] 2.2 Teste: o vigia grava o log sem bloquear (escrita assíncrona com limite).
 
 ## 3. Página
-- [ ] 3.1 Teste: o player só é recriado quando o estado da captura muda ou a pessoa pede.
+- [ ] 3.1 Teste: o player usa hls.js quando há MSE (nativo só sem MSE) e só é recriado quando o estado da captura muda ou a pessoa pede.
 - [ ] 3.2 Barra de nível com piso e escala que mexem num quarto quieto (chaves documentadas).
 - [ ] 3.3 Layout responsivo (plano do ux-ui) em 390, 768, 1280 e 1920 px, conferido com prints.
 
