@@ -12,7 +12,9 @@ const NUMEROS_POSITIVOS = [
   'servidorPorta', 'ouvirSiteMax', 'ouvirFolgaMs', 'ouvirAtrasoMaxMs',
   'ouvirMp3AtrasoMaxSegundos', 'sseBatidaSegundos', 'linhaTempoAtualizarSegundos',
   'controleTempoLimiteSegundos', 'nivelHz', 'saudeTimeoutMs', 'aovivoConectarSegundos', 'ouvirCompRazao',
+  'logJanelaSegundos', 'logLinhasPorJanela', 'logFilaMaxKB',
 ];
+const PRIORIDADES = ['abaixo', 'normal', 'acima', 'alta'];
 const ESTADOS_INICIAIS = ['gravando', 'so-som', 'parado'];
 
 function lerJson(arquivo) {
@@ -31,10 +33,22 @@ export function carregarConfig(raiz) {
   const cfg = { ...padrao, ...local };
 
   for (const chave of NUMEROS_POSITIVOS) {
+    if (chave === 'fpsCamera' && cfg[chave] === null) continue; // null = usa fps
     if (cfg[chave] === undefined && !['trechoSegundos', 'bufferHoras'].includes(chave)) continue;
     if (!(Number(cfg[chave]) > 0)) {
       throw new ConfigErro(`Configuração inválida: "${chave}" precisa ser um número maior que zero.`);
     }
+  }
+  if (cfg.tarefaPrioridade !== undefined && !(Number.isInteger(cfg.tarefaPrioridade) && cfg.tarefaPrioridade >= 0 && cfg.tarefaPrioridade <= 10)) {
+    throw new ConfigErro('Configuração inválida: "tarefaPrioridade" precisa ser um inteiro de 0 a 10.');
+  }
+  for (const k of ['ffmpegPrioridade', 'clipePrioridade']) {
+    if (cfg[k] !== undefined && !PRIORIDADES.includes(cfg[k])) {
+      throw new ConfigErro(`Configuração inválida: "${k}" precisa ser ${PRIORIDADES.join(', ')}.`);
+    }
+  }
+  if (cfg.clipeCopiar !== undefined && typeof cfg.clipeCopiar !== 'boolean') {
+    throw new ConfigErro('Configuração inválida: "clipeCopiar" precisa ser true ou false.');
   }
   if (typeof cfg.pasta !== 'string' || !cfg.pasta.trim()) {
     throw new ConfigErro('Configuração inválida: "pasta" não pode ficar vazia.');

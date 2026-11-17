@@ -141,3 +141,84 @@ test('respeita o intervalo mínimo entre partidas', async () => {
   assert.ok(c.esperas.includes(1100));
   await s.parar();
 });
+
+import { constants } from 'node:os';
+
+test('prioridade: chama definirPrioridade(pid, constante) depois do spawn; inválida não chama; falha só loga', async () => {
+  const casos = [['normal', constants.priority.PRIORITY_NORMAL], ['acima', constants.priority.PRIORITY_ABOVE_NORMAL], ['alta', constants.priority.PRIORITY_HIGH]];
+  for (const [nome, valor] of casos) {
+    const c = cenario();
+    const chamadas = [];
+    const s = supervisionar({ ...c.base, prioridade: nome, definirPrioridade: (p, v) => chamadas.push([p, v]),
+      iniciarProcesso: () => { const f = filho(); f.pid = 4321; c.filhos.push(f); return f; } });
+    await tick();
+    assert.deepEqual(chamadas, [[4321, valor]]);
+    await s.parar();
+  }
+  for (const ruim of [undefined, 'tempo-real', 'xyz', 3]) {
+    const c = cenario();
+    const chamadas = [];
+    const s = supervisionar({ ...c.base, prioridade: ruim, definirPrioridade: (p, v) => chamadas.push([p, v]),
+      iniciarProcesso: () => { const f = filho(); f.pid = 1; c.filhos.push(f); return f; } });
+    await tick();
+    assert.deepEqual(chamadas, []);
+    await s.parar();
+  }
+  const c = cenario();
+  const s = supervisionar({ ...c.base, prioridade: 'alta', definirPrioridade: () => { throw new Error('sem permissão'); },
+    iniciarProcesso: () => { const f = filho(); f.pid = 7; c.filhos.push(f); return f; } });
+  await tick();
+  assert.ok(c.logs.some((l) => /prioridade/i.test(l) && /sem permissão/.test(l)));
+  assert.equal(c.filhos.length, 1);
+  await s.parar();
+});
+
+test('stderr: chunk cortado no meio vira uma linha só; resto sai no exit', async () => {
+  const c = cenario();
+  const s = supervisionar({ ...c.base });
+  await tick();
+  c.filhos[0].stderr.emit('data', 'frame dro');
+  c.filhos[0].stderr.emit('data', 'pped\nsegunda\nterce');
+  assert.deepEqual(c.logs.filter((l) => l.startsWith('[ffmpeg]')), ['[ffmpeg] frame dropped', '[ffmpeg] segunda']);
+  c.filhos[0].emit('exit', 1, null);
+  await tick();
+  assert.ok(c.logs.includes('[ffmpeg] terce'));
+  await s.parar();
+});
+
+test('stderr: janela limita linhas e conta as omitidas na janela seguinte', async () => {
+  const c = cenario();
+  const s = supervisionar({ ...c.base, logJanelaSegundos: 10, logLinhasPorJanela: 20 });
+  await tick();
+  let texto = '';
+  for (let i = 0; i < 25; i++) texto += `erro distinto ${i}\n`;
+  c.filhos[0].stderr.emit('data', texto);
+  assert.equal(c.logs.filter((l) => l.startsWith('[ffmpeg] erro')).length, 20);
+  assert.ok(!c.logs.some((l) => /omitidas/.test(l)));
+  c.avancar(10000);
+  c.filhos[0].stderr.emit('data', 'nova janela\n');
+  const i = c.logs.findIndex((l) => l === '[ffmpeg] 5 linhas omitidas');
+  assert.ok(i >= 0);
+  assert.equal(c.logs[i + 1], '[ffmpeg] nova janela');
+  await s.parar();
+});
+
+test('stderr: linhas idênticas seguidas saem uma vez, com "(repetida N vezes)" quando muda', async () => {
+  const c = cenario();
+  const s = supervisionar({ ...c.base });
+  await tick();
+  c.filhos[0].stderr.emit('data', 'frame dropped\nframe dropped\nframe dropped\nframe dropped\noutra\n');
+  const l = c.logs.filter((x) => x.startsWith('[ffmpeg]'));
+  assert.deepEqual(l, ['[ffmpeg] frame dropped', '[ffmpeg] (repetida 3 vezes)', '[ffmpeg] outra']);
+  await s.parar();
+});
+
+test('prioridade abaixo também é aceita', async () => {
+  const c = cenario();
+  const ch = [];
+  const s = supervisionar({ ...c.base, prioridade: 'abaixo', definirPrioridade: (p, v) => ch.push([p, v]),
+    iniciarProcesso: () => { const f = filho(); f.pid = 5; c.filhos.push(f); return f; } });
+  await tick();
+  assert.deepEqual(ch, [[5, constants.priority.PRIORITY_BELOW_NORMAL]]);
+  await s.parar();
+});

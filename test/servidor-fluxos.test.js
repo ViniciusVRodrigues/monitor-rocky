@@ -156,3 +156,19 @@ test('ouvir MP3: spawn que falha dá 503; fechar() encerra o codificador', async
   } finally { await c2.fim(); }
   assert.equal(procs[0].matou, true);
 });
+
+test('nivel: mapeia [piso, teto] em [0, 1] com corte', () => {
+  const v = [];
+  const n = criarNivel({ ouvirHz: 1000, nivelHz: 10, suavizacao: 0, pisoDb: -80, tetoDb: -20, aoNivel: (x) => v.push(x) });
+  const amp = (db) => Math.round(32768 * 10 ** (db / 20));
+  n.alimentar(pcm(amp(-80), 100)); // piso
+  n.alimentar(pcm(amp(-20), 100)); // teto
+  n.alimentar(pcm(amp(-50), 100)); // meio
+  n.alimentar(pcm(amp(-95), 100)); // abaixo
+  n.alimentar(pcm(amp(-5), 100));  // acima
+  assert.ok(v[0] < 0.01, `piso ${v[0]}`);
+  assert.ok(v[1] > 0.99, `teto ${v[1]}`);
+  assert.ok(Math.abs(v[2] - 0.5) < 0.01, `meio ${v[2]}`);
+  assert.equal(v[3], 0);
+  assert.equal(v[4], 1);
+});

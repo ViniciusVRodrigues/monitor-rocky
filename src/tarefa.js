@@ -11,7 +11,10 @@ export function escaparXml(s) {
     .replace(/"/g, '&quot;');
 }
 
-export function montarTarefaXml({ usuario, vbs, descricao = 'Monitor Rocky' }) {
+export function montarTarefaXml({ usuario, vbs, descricao = 'Monitor Rocky', prioridade = 3 }) {
+  if (!Number.isInteger(prioridade) || prioridade < 0 || prioridade > 10) {
+    throw new Error(`tarefaPrioridade inválida (${prioridade}): use um inteiro de 0 a 10.`);
+  }
   const u = escaparXml(usuario);
   return `<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -36,6 +39,7 @@ export function montarTarefaXml({ usuario, vbs, descricao = 'Monitor Rocky' }) {
     <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
     <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
     <StartWhenAvailable>true</StartWhenAvailable>
+    <Priority>${prioridade}</Priority>
     <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
     <AllowStartOnDemand>true</AllowStartOnDemand>
     <Enabled>true</Enabled>

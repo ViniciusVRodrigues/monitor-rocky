@@ -7,6 +7,14 @@ import { criarDia } from './dia.js';
 
 const $ = (id) => document.getElementById(id);
 
+// O vídeo fixo no celular fica logo abaixo do topo, que muda de altura (botão "Ativar som" no topo).
+const topo = document.querySelector('.topo');
+if (topo) {
+  const medirTopo = () => document.documentElement.style.setProperty('--altura-topo', `${topo.offsetHeight}px`);
+  medirTopo();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(medirTopo).observe(topo);
+}
+
 const PADRAO = {
   aovivoConectarSegundos: 15, ouvirModo: 'auto', ouvirHz: 24000, ouvirGanhoDb: 18, ouvirFolgaMs: 300, ouvirAtrasoMaxMs: 1000, ouvirMp3AtrasoMaxSegundos: 4,
   linhaTempoAtualizarSegundos: 30, bufferHoras: 4, trechoSegundos: 60, controleTempoLimiteSegundos: 20, somAoAbrir: true,
@@ -208,7 +216,7 @@ async function principal() {
 
   abrirAoVivo({
     aoConexao,
-    aoEstado: (d) => aplicarEstado(d.estado, d.ouvindoPC, d.reiniciando, true),
+    aoEstado: (d) => aplicarEstado(d.estado, d.ouvindoPC, d.reiniciando, false),
     aoEvento: (ev) => dia.novoEvento(ev),
     aoNivel: (n) => {
       ultimoNivel = Date.now();

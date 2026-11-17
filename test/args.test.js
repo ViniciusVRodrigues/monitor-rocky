@@ -123,3 +123,9 @@ test('fonte de teste usa lavfi em tempo real, sem dshow', () => {
 test('estado parado não tem argumentos', () => {
   assert.throws(() => montarArgs(cfg, { estado: 'parado' }), /parado/);
 });
+
+test('-framerate usa fpsCamera quando definido, senão o fps de gravação', () => {
+  assert.match(montarArgs({ ...cfg, fpsCamera: null }).join(' '), /-framerate 15 /);
+  assert.match(montarArgs({ ...cfg }).join(' '), /-framerate 15 /);
+  assert.match(montarArgs({ ...cfg, fpsCamera: 30 }).join(' '), /-framerate 30 /);
+});

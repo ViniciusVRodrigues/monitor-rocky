@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import { setPriority } from 'node:os';
+import { aplicarPrioridade } from './prioridade.js';
 
 const pausar = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -13,6 +15,10 @@ const pausar = (ms) => new Promise((r) => setTimeout(r, ms));
  *   ninguém ouvindo), senão o processo trava com o pipe cheio.
  * - `reiniciar()` encerra o processo e sobe outro sem passar pelo backoff.
  * - `definirAtivo(false)` encerra e não reinicia; `definirAtivo(true)` volta.
+ * - `prioridade` ('abaixo'|'normal'|'acima'|'alta'): ajusta a prioridade do filho depois do
+ *   spawn com `definirPrioridade` (os.setPriority); inválida/ausente não ajusta; falha só loga.
+ * - stderr vira linhas inteiras e passa por um limite por janela (`logLinhasPorJanela` a cada
+ *   `logJanelaSegundos`), com excedente contado e linhas idênticas seguidas resumidas.
  * - `intervaloMinimoMs`: espaço mínimo entre duas partidas (evita que dois
  *   processos criem o mesmo arquivo HH-MM-SS).
  */
@@ -34,6 +40,10 @@ export function supervisionar({
   relogio = Date.now,
   prefixoLog = 'ffmpeg',
   encerrarProcesso = null,
+  prioridade = null,
+  definirPrioridade = setPriority,
+  logJanelaSegundos = 10,
+  logLinhasPorJanela = 20,
 }) {
   let parando = false;
   let ativo = ativoInicial;
@@ -42,6 +52,46 @@ export function supervisionar({
   let acorda = null;
   let ultimoInicio = null;
   let espera = esperaInicialMs;
+
+  // Saída do stderr: linhas inteiras, limite por janela e resumo de repetições.
+  let restoErr = '';
+  let janelaIni = null;
+  let naJanela = 0;
+  let omitidas = 0;
+  let ultima = null;
+  let repetidas = 0;
+  const janelaMs = Math.max(1, Number(logJanelaSegundos) || 10) * 1000;
+  const maxLinhas = Math.max(1, Number(logLinhasPorJanela) || 20);
+  const emitir = (m) => log(`[${prefixoLog}] ${m}`);
+  function abrirJanela() {
+    const agora = relogio();
+    if (janelaIni === null || agora - janelaIni >= janelaMs) {
+      janelaIni = agora; naJanela = 0;
+      if (omitidas > 0) { const n = omitidas; omitidas = 0; emitir(`${n} linhas omitidas`); }
+    }
+  }
+  function fecharRepeticao() {
+    if (repetidas > 0) { const n = repetidas; repetidas = 0; if (naJanela < maxLinhas) { naJanela++; emitir(`(repetida ${n} vezes)`); } else omitidas++; }
+  }
+  function linhaErr(l) {
+    if (!l.trim()) return;
+    abrirJanela();
+    if (l === ultima) { repetidas++; return; }
+    fecharRepeticao();
+    ultima = l;
+    if (naJanela < maxLinhas) { naJanela++; emitir(l); } else omitidas++;
+  }
+  function entradaErr(b) {
+    restoErr += String(b);
+    const partes = restoErr.split(/\r?\n/);
+    restoErr = partes.pop();
+    for (const l of partes) linhaErr(l);
+  }
+  function despejarErr() {
+    if (restoErr) { const r = restoErr; restoErr = ''; linhaErr(r); }
+    fecharRepeticao();
+    ultima = null;
+  }
 
   const acordar = () => { const a = acorda; acorda = null; a?.(); };
   const dormirAte = () => new Promise((r) => { acorda = r; });
@@ -72,14 +122,14 @@ export function supervisionar({
         try { f = iniciarProcesso(comando, typeof args === 'function' ? args() : args, opcoes); }
         catch (e) { resolve({ erro: e }); return; }
         filho = f;
+        aplicarPrioridade({ pid: f.pid, nome: prioridade, definir: definirPrioridade, log });
         f.on('error', (e) => resolve({ erro: e }));
         f.on('exit', (codigo, sinal) => resolve({ codigo, sinal }));
         f.stdout?.on('data', (b) => { try { aoSaida(b); } catch (e) { log(`Erro ao tratar a saída: ${e.message}`); } });
-        f.stderr?.on('data', (b) => {
-          for (const l of String(b).split(/\r?\n/)) if (l.trim()) log(`[${prefixoLog}] ${l}`);
-        });
+        f.stderr?.on('data', entradaErr);
       });
       filho = null;
+      despejarErr();
       if (parando) break;
       if (paradaPedida) { paradaPedida = false; espera = esperaInicialMs; continue; }
       if (relogio() - inicio >= estavelMs) espera = esperaInicialMs;

@@ -29,7 +29,7 @@ try {
     // UTF-16 com BOM: o wscript lê ANSI por padrão e quebraria caminhos com acento
     writeFileSync(vbs, `﻿${montarVbs({ node: process.execPath, vigia: join(raiz, 'src', 'vigia.js'), raiz })}`, 'utf16le');
     const usuario = `${process.env.USERDOMAIN ?? ''}\\${process.env.USERNAME ?? ''}`.replace(/^\\/, '');
-    const xml = montarTarefaXml({ usuario, vbs, descricao: 'Monitor Rocky: sobe o vigia da babá eletrônica no logon.' });
+    const xml = montarTarefaXml({ usuario, vbs, descricao: 'Monitor Rocky: sobe o vigia da babá eletrônica no logon.', prioridade: cfg.tarefaPrioridade ?? undefined });
     writeFileSync(tarefa.criar[4], `﻿${xml}`, 'utf16le');
     const r = schtasks(tarefa.criar);
     rmSync(tarefa.criar[4], { force: true });

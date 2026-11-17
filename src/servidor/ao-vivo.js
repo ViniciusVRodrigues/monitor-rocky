@@ -17,7 +17,7 @@ export function criarAoVivo({ cfg, monitor, aoEvento }) {
 
   const nivel = criarNivel({
     ouvirHz: cfg.ouvirHz, nivelHz: cfg.nivelHz ?? 10,
-    suavizacao: cfg.nivelSuavizacao ?? 0.6, pisoDb: cfg.nivelPisoDb ?? -60,
+    suavizacao: cfg.nivelSuavizacao ?? 0.6, pisoDb: cfg.nivelPisoDb ?? -80, tetoDb: cfg.nivelTetoDb ?? -20,
     aoNivel: (n) => enviar('nivel', { nivel: n }, true),
   });
 

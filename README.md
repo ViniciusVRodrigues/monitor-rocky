@@ -72,7 +72,7 @@ Em `so-som` os trechos continuam `.mp4`, mas só com áudio AAC (sem vídeo); o 
 | `pasta` | `gravacoes` | onde gravar (relativa à raiz ou absoluta) |
 | `ffmpeg` | `ffmpeg` | executável |
 | `resolucao` | `1280x720` | tamanho do vídeo |
-| `fpsCamera` / `fps` | 30 / 15 | o que a câmera entrega / o que é gravado |
+| `fpsCamera` / `fps` | 30 / 15 | o que a câmera entrega / o que é gravado. A câmera desta máquina só entrega 30 fps em MJPEG a 720p; `null` abre a câmera no próprio `fps` (sem decodificar quadros jogados fora), para câmeras que aceitem |
 | `preset`, `crf` | `veryfast`, 23 | qualidade do H.264 (crf menor = melhor) |
 | `audioBitrate`, `audioHz`, `audioCanais` | `96k`, 44100, 1 | áudio AAC gravado |
 | `trechoSegundos` | 60 | duração de cada trecho |
@@ -125,7 +125,9 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 | `eventoJuntarSegundos` | 10 | tempo mínimo entre eventos: atividades mais próximas viram um só |
 | `eventoMaxSegundos` | 120 | duração máxima de um evento (barulho contínuo vira vários) |
 | `clipeMargemSegundos` | 10 | espera extra antes de recortar (o trecho em gravação chega ao disco com alguns segundos de atraso) |
-| `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe (é recodificado para cortar certinho) |
+| `clipeCopiar` | `true` | recorta o clipe sem recodificar (corte no quadro-chave, a cada `aovivoSegundos`); `false` recodifica com `clipePreset`/`clipeCrf` para cortar certinho, gastando CPU a cada evento |
+| `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe quando `clipeCopiar` é `false` |
+| `clipePrioridade` | `abaixo` | prioridade do ffmpeg que recorta clipes e miniaturas (mesmos valores de `ffmpegPrioridade`), para não disputar CPU com a captura |
 | `miniaturaLargura` | 320 | largura da miniatura |
 | `clipesDias` | 30 | por quantos dias guardar clipes e registros (inteiro até 36500; `0` = sempre) |
 
@@ -146,6 +148,10 @@ O vigia roda o `npm start` (`src/principal.js`: monitor, detecção e a página 
 | `servicoNome` | `monitor-rocky` | nome da tarefa agendada |
 | `logPasta` | `logs` | pasta do log do vigia |
 | `logMaxMB`, `logArquivos` | 5, 5 | tamanho que dispara a rotação e quantos arquivos antigos manter |
+| `logJanelaSegundos`, `logLinhasPorJanela` | 10, 20 | no máximo tantas linhas do ffmpeg por janela; o excesso vira "N linhas omitidas" e linhas iguais seguidas viram "(repetida N vezes)" |
+| `logFilaMaxKB` | 1024 | fila da escrita do log do vigia; acima disso descarta e conta |
+| `tarefaPrioridade` | 3 | prioridade da tarefa agendada, herdada pelo vigia e pelo monitor (0 a 10 do Agendador: 1 alta, 2–3 acima do normal, 4–6 normal, 7–8 abaixo; o padrão do Windows é 7). Acima do normal evita que outra carga deixe o Node sem ler as saídas do ffmpeg, o que trava a captura. Reinstale a tarefa para aplicar |
+| `ffmpegPrioridade` | `acima` | prioridade do ffmpeg de captura: `abaixo`, `normal`, `acima` ou `alta`; evita que outra carga deixe a câmera sem CPU |
 | `vigiaEsperaSegundos`, `vigiaEsperaMaxSegundos` | 2, 120 | espera ao subir o monitor de novo (dobra até o máximo) |
 | `vigiaEstavelSegundos` | 60 | tempo de pé que zera a espera |
 | `saudeIntervaloSegundos` | 60 | de quanto em quanto tempo checar câmera e microfone |
@@ -176,7 +182,7 @@ Chaves novas do `config.json` (sobrepostas por `config.local.json`):
 | `controleTempoLimiteSegundos` | 20 | tempo máximo de um controle |
 | `nivelHz` | 10 | quantas vezes por segundo o nível do som vai para a página |
 | `nivelSuavizacao` | 0.6 | queda suave da barra (0 a menos de 1); a subida é imediata |
-| `nivelPisoDb` | -60 | dBFS que vira barra vazia |
+| `nivelPisoDb`, `nivelTetoDb` | -80, -20 | dBFS que vira barra vazia / barra cheia |
 | `somAoAbrir` | true | a página abre com o som ao vivo ligado |
 
 ## Estado

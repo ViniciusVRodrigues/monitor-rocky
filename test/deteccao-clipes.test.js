@@ -185,3 +185,50 @@ test('falha do ffmpeg: erro em pt-BR, sem .tmp sobrando', opts, async () => {
   );
   assert.deepEqual(readdirSync(dir), []);
 });
+
+// --- args do recorte e prioridade (com dublê, sem ffmpeg real) ---
+
+function dubleExecutor() {
+  const chamadas = [];
+  const executor = (cmd, args, extra) => {
+    chamadas.push({ cmd, args, extra });
+    const alvo = args[args.length - 1];
+    if (/\.mp4$|\.jpg$/.test(alvo)) writeFileSync(alvo, 'x');
+    return Promise.resolve({ code: 0, out: '', err: '' });
+  };
+  return { chamadas, executor };
+}
+const TR = [{ arquivo: 'C:/x/10-00-00.mp4', inicioMs: 1000, duracaoS: 60, temVideo: true }];
+
+test('clipe: -c copy por padrão (e miniatura inalterada)', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'rocky-dub-'));
+  try {
+    const { chamadas, executor } = dubleExecutor();
+    await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'a'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff' }, executor });
+    const a = chamadas[0].args.join(' ');
+    assert.match(a, /-c copy/);
+    assert.doesNotMatch(a, /libx264/);
+    assert.match(chamadas[1].args.join(' '), /-frames:v 1/);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test('clipe: clipeCopiar false mantém libx264', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'rocky-dub-'));
+  try {
+    const { chamadas, executor } = dubleExecutor();
+    await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'a'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff', clipeCopiar: false }, executor });
+    assert.match(chamadas[0].args.join(' '), /libx264/);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test('clipe: ffmpeg de clipe e de miniatura sobem com clipePrioridade (padrão abaixo)', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'rocky-dub-'));
+  try {
+    const { chamadas, executor } = dubleExecutor();
+    await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'a'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff' }, executor });
+    assert.deepEqual(chamadas.map((c) => c.extra.prioridade), ['abaixo', 'abaixo']);
+    const o = dubleExecutor();
+    await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'b'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff', clipePrioridade: 'normal' }, executor: o.executor });
+    assert.equal(o.chamadas[0].extra.prioridade, 'normal');
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});

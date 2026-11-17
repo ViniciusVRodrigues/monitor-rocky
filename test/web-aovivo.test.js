@@ -93,3 +93,109 @@ test('gancho aoGravacao/aoVivo avisa a página (o som do site não toca por cima
   player.voltarAoVivo();
   assert.deepEqual(eventos, ['gravacao', 'vivo']);
 });
+
+// ---------- hls.js primeiro, estável ----------
+function comHls(fn, { suportado = true } = {}) {
+  const criados = [];
+  class FakeHls {
+    static isSupported() { return suportado; }
+    static Events = { ERROR: 'erro', MANIFEST_PARSED: 'manifesto' };
+    static ErrorTypes = { MEDIA_ERROR: 'mediaError', NETWORK_ERROR: 'networkError' };
+    constructor(cfg) { this.cfg = cfg; this.destruido = 0; this.recuperou = 0; this.h = {}; criados.push(this); }
+    on(ev, f) { this.h[ev] = f; }
+    loadSource(u) { this.url = u; }
+    attachMedia() {}
+    destroy() { this.destruido += 1; }
+    recoverMediaError() { this.recuperou += 1; }
+  }
+  const antes = globalThis.Hls;
+  globalThis.Hls = suportado === null ? undefined : FakeHls;
+  try { return fn(FakeHls, criados); } finally { globalThis.Hls = antes; }
+}
+
+test('com hls.js suportado e canPlayType "maybe", usa hls.js (não define video.src)', () => {
+  comHls((_H, criados) => {
+    const { video, player } = montar();
+    player.aplicar('gravando', {});
+    assert.equal(video.src, '');
+    assert.equal(criados.length, 1);
+    assert.equal(criados[0].cfg.liveSyncDurationCount, 3);
+    assert.match(criados[0].url, /\/aovivo\/index\.m3u8/);
+  });
+});
+
+test('sem hls.js usa o HLS nativo; sem nenhum dos dois, erro', () => {
+  comHls(() => {
+    const { video, player } = montar();
+    player.aplicar('gravando', {});
+    assert.match(video.src, /index\.m3u8/);
+  }, { suportado: null });
+  comHls(() => {
+    const { video, nos, player } = montar();
+    video.canPlayType = () => '';
+    player.aplicar('gravando', {});
+    assert.match(nos.telaTexto.textContent, /Não consegui abrir o ao vivo/);
+  }, { suportado: null });
+  comHls(() => { // hls.js presente mas sem MSE: cai para o nativo
+    const { video, player } = montar();
+    player.aplicar('gravando', {});
+    assert.match(video.src, /index\.m3u8/);
+  }, { suportado: false });
+});
+
+test('erro fatal de mídia tenta recoverMediaError uma vez e não recria o player', () => {
+  comHls((H, criados) => {
+    const { nos, player } = montar();
+    player.aplicar('gravando', {});
+    const h = criados[0];
+    h.h[H.Events.ERROR]('e', { fatal: true, type: H.ErrorTypes.MEDIA_ERROR });
+    assert.equal(h.recuperou, 1);
+    assert.equal(h.destruido, 0);
+    assert.equal(criados.length, 1);
+    assert.match(nos.telaTexto.textContent, /Conectando/);
+    h.h[H.Events.ERROR]('e', { fatal: true, type: H.ErrorTypes.MEDIA_ERROR });
+    assert.equal(h.recuperou, 1);
+    assert.match(nos.telaTexto.textContent, /Não consegui abrir o ao vivo/);
+  });
+});
+
+test('erro fatal de rede vai direto para o erro com nova tentativa', () => {
+  comHls((H, criados) => {
+    const { nos, player } = montar();
+    player.aplicar('gravando', {});
+    criados[0].h[H.Events.ERROR]('e', { fatal: true, type: H.ErrorTypes.NETWORK_ERROR });
+    assert.equal(criados[0].recuperou, 0);
+    assert.match(nos.telaTexto.textContent, /Não consegui abrir o ao vivo/);
+  });
+});
+
+test('mesmo estado repetido não mexe no player; estado novo recria; Tentar agora recria', () => {
+  comHls((_H, criados) => {
+    const { nos, player } = montar();
+    player.aplicar('gravando', {});
+    player.aplicar('gravando', {});
+    player.aplicar('gravando', {});
+    assert.equal(criados.length, 1);
+    assert.equal(criados[0].destruido, 0);
+    // em erro/esperando retentativa, estado repetido também não recria
+    criados[0].h['erro']('e', { fatal: true, type: 'networkError' });
+    player.aplicar('gravando', {});
+    assert.equal(criados.length, 1);
+    assert.match(nos.telaTexto.textContent, /Não consegui abrir/);
+    // pedido da pessoa
+    player.aplicar('so-som', {});
+    assert.equal(criados[0].destruido, 1);
+    player.aplicar('gravando', {});
+    assert.equal(criados.length, 2);
+  });
+});
+
+test('forcar (pedido da pessoa) recria mesmo com o mesmo estado', () => {
+  comHls((_H, criados) => {
+    const { player } = montar();
+    player.aplicar('gravando', {});
+    player.aplicar('gravando', {}, { forcar: true });
+    assert.equal(criados.length, 2);
+    assert.equal(criados[0].destruido, 1);
+  });
+});
