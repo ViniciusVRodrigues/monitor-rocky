@@ -26,5 +26,5 @@
 - [x] 3.1 Verificador por pacote; leitura dos diffs
 - [x] 3.2 Prints em 390 e 1280 com `fonte: "teste"` e eventos de exemplo
 - [x] 3.3 qa-senior e ux-ui em validação; corrigir bloqueios
-- [ ] 3.4 Rebase na main, PR, merge, arquivar a change
+- [x] 3.4 Rebase na main, PR, merge, arquivar a change
 - [ ] 3.5 Pendente para a pessoa: testar o Ouvir com a tela apagada num celular real
