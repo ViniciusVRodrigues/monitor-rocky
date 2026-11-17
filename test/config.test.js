@@ -50,6 +50,16 @@ test('valida as chaves novas quando presentes', () => {
   }
 });
 
+test('valida guardadosPasta e guardarMaxArquivos', () => {
+  for (const ruim of [{ guardadosPasta: '../fora' }, { guardadosPasta: 'trechos' }, { guardadosPasta: 'Clipes' }, { guardadosPasta: '' },
+    { guardadosPasta: 'a/b' }, { guardarMaxArquivos: 0 }, { guardarMaxArquivos: 2.5 }, { guardarMaxArquivos: '10' }]) {
+    const raiz = raizTemp({ video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4, ...ruim });
+    try { assert.throws(() => carregarConfig(raiz), ConfigErro, JSON.stringify(ruim)); } finally { rmSync(raiz, { recursive: true, force: true }); }
+  }
+  const raiz = raizTemp({ video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4, guardadosPasta: 'meus', guardarMaxArquivos: 30 });
+  try { assert.equal(carregarConfig(raiz).guardadosPasta, 'meus'); } finally { rmSync(raiz, { recursive: true, force: true }); }
+});
+
 test('fonte de teste dispensa câmera e microfone', () => {
   assert.doesNotThrow(() => validarDispositivos({ fonte: 'teste', video: '', audio: '' }));
 });

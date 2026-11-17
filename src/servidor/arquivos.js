@@ -44,17 +44,18 @@ function resolverDentro(base, segs) {
 }
 
 /**
- * /arquivos/{trechos|clipes}/<dia>/<nome>.{mp4,jpg} e /aovivo/<nome>.{m3u8,ts}.
- * `caminhoCru` é o pathname da URL, sem a query.
+ * /arquivos/{trechos|clipes}/<dia>/<nome>.{mp4,jpg}, /arquivos/guardados/<pasta>/<nome>.{mp4,jpg}
+ * e /aovivo/<nome>.{m3u8,ts}. `caminhoCru` é o pathname da URL, sem a query.
+ * `guardados` é o nome da subpasta dos guardados (chave `guardadosPasta`).
  */
-export function resolverGravacao(pasta, caminhoCru) {
+export function resolverGravacao(pasta, caminhoCru, guardados = 'guardados') {
   const segs = segmentosSeguros(caminhoCru);
   if (!segs) return null;
   const ext = extname(segs[segs.length - 1]);
   if (segs[0] === 'arquivos') {
-    if (segs.length !== 4 || (segs[1] !== 'trechos' && segs[1] !== 'clipes')) return null;
+    if (segs.length !== 4 || (segs[1] !== 'trechos' && segs[1] !== 'clipes' && segs[1] !== 'guardados')) return null;
     if (ext !== '.mp4' && ext !== '.jpg') return null;
-    const r = resolverDentro(join(pasta, segs[1]), segs.slice(2));
+    const r = resolverDentro(join(pasta, segs[1] === 'guardados' ? guardados : segs[1]), segs.slice(2));
     return r && { ...r, mime: MIME[ext], cache: 'no-cache' };
   }
   if (segs[0] === 'aovivo') {
