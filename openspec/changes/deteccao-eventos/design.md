@@ -46,7 +46,7 @@ Um por tipo. `atividade(t, intensidade)` abre ou estende o evento; `verificar(t)
 
 ## Recorte
 
-Janela `[inicio − eventoPreSegundos, fim + eventoPosSegundos]`. Espera `fim + pos + clipeMargemSegundos` antes de recortar (os fragmentos do fMP4 saem a cada `aovivoSegundos`).
+Janela `[inicio − eventoPreSegundos, fim + eventoPosSegundos]`. Espera `fim + pos + clipeMargemSegundos` antes de recortar (os fragmentos do fMP4 saem a cada `aovivoSegundos`, mais o atraso do codificador; no teste ponta a ponta 3 s cortaram 1 a 3 s do fim do clipe, por isso o padrão é 10 s).
 
 - Trechos: `trechos/AAAA-MM-DD/HH-MM-SS.mp4`. Início = nome (hora local, resolução de 1 s); fim = duração lida com ffprobe (o trecho não tem exatamente `trechoSegundos`: o corte cai em keyframe e há reinícios e buracos). Escolhe os que cruzam a janela, inclusive o que ainda está sendo escrito.
 - Concat demuxer com os trechos inteiros e corte na saída (`-ss`/`-t`, decodificando), com **recodificação** (libx264 `clipePreset`/`clipeCrf`, AAC). A cópia de stream arredonda para o keyframe (GOP de 2 s) e o concat tem problemas conhecidos com inpoint/outpoint em cópia ([trac #8464](https://trac.ffmpeg.org/ticket/8464), [trac #5907](https://trac.ffmpeg.org/ticket/5907)); um clipe de ~30 s recodificado custa pouco e fecha as bordas certinho. Testado no ffmpeg 9: mesmo recodificando, `inpoint` no concat cai no keyframe anterior e deixou o clipe ~1 s mais longo; o corte na saída ficou dentro de ±0,5 s. Buracos entre trechos são colados (o clipe fica um pouco mais curto que a janela).

@@ -119,7 +119,7 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 | `eventoPreSegundos`, `eventoPosSegundos` | 5, 5 | quanto o clipe pega antes e depois |
 | `eventoJuntarSegundos` | 10 | tempo mínimo entre eventos: atividades mais próximas viram um só |
 | `eventoMaxSegundos` | 120 | duração máxima de um evento (barulho contínuo vira vários) |
-| `clipeMargemSegundos` | 3 | espera extra antes de recortar (o trecho é gravado em pedaços) |
+| `clipeMargemSegundos` | 10 | espera extra antes de recortar (o trecho em gravação chega ao disco com alguns segundos de atraso) |
 | `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe (é recodificado para cortar certinho) |
 | `miniaturaLargura` | 320 | largura da miniatura |
 | `clipesDias` | 30 | por quantos dias guardar clipes e registros (`0` = sempre) |

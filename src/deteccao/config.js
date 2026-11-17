@@ -17,7 +17,7 @@ export const PADROES = {
   eventoPosSegundos: 5,
   eventoJuntarSegundos: 10,
   eventoMaxSegundos: 120,
-  clipeMargemSegundos: 3,
+  clipeMargemSegundos: 10,
   clipePreset: 'veryfast',
   clipeCrf: 26,
   miniaturaLargura: 320,
