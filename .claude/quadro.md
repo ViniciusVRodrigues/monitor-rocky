@@ -8,7 +8,7 @@
 | ROCKY-7 | Timeout no recorte de clipe do ffmpeg (um recorte travado segura a fila) + achar o teste intermitente (1 falha em 3 rodadas no main em 2026-11-17) | Sonnet | — |
 | ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
-| ROCKY-12 | Estabilidade fina: picos do event loop (5,5 s e 2,2 s) perto de movimento e clipe; aviso do hls "failed to rename index.m3u8.tmp"; `recuperou` do hls.js que não zera; harness que leva ~3 min para encerrar | Sonnet | — |
+| ROCKY-12 | Estabilidade fina: picos do event loop (5,5 s e 2,2 s) perto de movimento e clipe; aviso do hls "failed to rename index.m3u8.tmp"; `recuperou` do hls.js que não zera; harness que leva ~3 min para encerrar; o node da tarefa ficou em prioridade Normal mesmo com `tarefaPrioridade` 3 (o ffmpeg está acima do normal); `schtasks /End` não derrubou o vigia antigo (precisou de taskkill) | Sonnet | — |
 | ROCKY-13 | Ajustes da página: avisos de som duplicados ("Toque para ouvir" e "Ativar som"), validar zoom 200% e modo gravação; perguntar à pessoa se o player fica no topo em 1280 | Opus (visual) | — |
 
 ## Fazendo
