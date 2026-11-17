@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "node src/captura.js",
+    "start": "node src/principal.js",
     "iniciar": "node scripts/controle.js iniciar",
     "parar": "node scripts/controle.js parar",
     "estado": "node scripts/controle.js estado",
@@ -20,5 +20,8 @@
     "instalar-servico": "node scripts/servico.js instalar",
     "remover-servico": "node scripts/servico.js remover",
     "vigia": "node src/vigia.js"
+  },
+  "dependencies": {
+    "hls.js": "1.7.4"
   }
 }

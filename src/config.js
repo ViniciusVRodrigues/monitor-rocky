@@ -9,6 +9,9 @@ const NUMEROS_POSITIVOS = [
   'esperaReinicioMaxSegundos', 'ouvirHz',
   'logMaxMB', 'vigiaEsperaSegundos', 'vigiaEsperaMaxSegundos', 'vigiaEstavelSegundos',
   'saudeIntervaloSegundos', 'alertaFalhasSeguidas', 'alertaEstavelSegundos',
+  'servidorPorta', 'ouvirSiteMax', 'ouvirFolgaMs', 'ouvirAtrasoMaxMs',
+  'ouvirMp3AtrasoMaxSegundos', 'sseBatidaSegundos', 'linhaTempoAtualizarSegundos',
+  'controleTempoLimiteSegundos', 'nivelHz',
 ];
 const ESTADOS_INICIAIS = ['gravando', 'so-som', 'parado'];
 
@@ -49,6 +52,26 @@ export function carregarConfig(raiz) {
     if (cfg[k] !== undefined && !String(cfg[k]).trim()) throw new ConfigErro(`Configuração inválida: "${k}" não pode ficar vazio.`);
   }
   if (cfg.logPasta !== undefined) cfg.logPasta = isAbsolute(cfg.logPasta) ? cfg.logPasta : resolve(raiz, cfg.logPasta);
+  if (cfg.ouvirModo !== undefined && !['auto', 'pcm', 'mp3'].includes(cfg.ouvirModo)) {
+    throw new ConfigErro('Configuração inválida: "ouvirModo" precisa ser auto, pcm ou mp3.');
+  }
+  if (cfg.hostsPermitidos !== undefined &&
+      !(Array.isArray(cfg.hostsPermitidos) && cfg.hostsPermitidos.every((h) => typeof h === 'string' && h.trim()))) {
+    throw new ConfigErro('Configuração inválida: "hostsPermitidos" precisa ser uma lista de textos.');
+  }
+  if (cfg.ouvirMp3Bitrate !== undefined && !String(cfg.ouvirMp3Bitrate).trim()) {
+    throw new ConfigErro('Configuração inválida: "ouvirMp3Bitrate" não pode ficar vazio.');
+  }
+  if (cfg.nivelSuavizacao !== undefined &&
+      !(typeof cfg.nivelSuavizacao === 'number' && cfg.nivelSuavizacao >= 0 && cfg.nivelSuavizacao < 1)) {
+    throw new ConfigErro('Configuração inválida: "nivelSuavizacao" precisa ser um número de 0 até menos de 1.');
+  }
+  if (cfg.nivelPisoDb !== undefined && !(typeof cfg.nivelPisoDb === 'number' && cfg.nivelPisoDb < 0)) {
+    throw new ConfigErro('Configuração inválida: "nivelPisoDb" precisa ser um número negativo.');
+  }
+  if (cfg.somAoAbrir !== undefined && typeof cfg.somAoAbrir !== 'boolean') {
+    throw new ConfigErro('Configuração inválida: "somAoAbrir" precisa ser true ou false.');
+  }
   cfg.pasta = isAbsolute(cfg.pasta) ? cfg.pasta : resolve(raiz, cfg.pasta);
   return cfg;
 }
