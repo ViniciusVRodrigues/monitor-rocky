@@ -5,7 +5,7 @@
 |---|---|---|---|
 | ROCKY-4 | Acesso remoto: Cloudflare Tunnel (cloudflared como serviço) + Cloudflare Access com Google; servidor valida o JWT do Access | Opus (segurança) | ROCKY-3 |
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram) | Opus | ROCKY-2, ROCKY-4 |
-| ROCKY-7 | Timeout no recorte de clipe do ffmpeg (um recorte travado segura a fila) | Sonnet | — |
+| ROCKY-7 | Timeout no recorte de clipe do ffmpeg (um recorte travado segura a fila) + achar o teste intermitente (1 falha em 3 rodadas no main em 2026-11-17) | Sonnet | — |
 | ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
