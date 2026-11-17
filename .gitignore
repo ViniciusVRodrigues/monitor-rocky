@@ -1,0 +1,12 @@
+node_modules/
+gravacoes/
+*.mp4
+*.m3u8
+*.ts
+config.local.json
+.env
+.env.*
+*.pem
+cloudflared/*.json
+.claude/worktrees/
+.claude/settings.local.json
