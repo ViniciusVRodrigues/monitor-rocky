@@ -71,6 +71,8 @@
   "clipePrioridade": "abaixo",
   "miniaturaLargura": 320,
   "clipesDias": 30,
+  "clipesMaxGb": 0,
+  "discoLivreMinGb": 0,
   "servidorPorta": 8321,
   "hostsPermitidos": [],
   "tailscaleLoginsPermitidos": [],

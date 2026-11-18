@@ -98,7 +98,7 @@ Com `npm start`, o monitor também detecta:
 - **Som** (latido, choro): volume (RMS em dBFS) do áudio ao vivo acima de `somLimiarDb` por pelo menos `somDuracaoMinimaMs`. Funciona em `gravando` e em `so-som`.
 - **Movimento**: o mesmo ffmpeg manda quadros cinza pequenos por um pipe nomeado local; conta-se a fração de pixels que mudou entre quadros. Só em `gravando` (com a câmera desligada não há movimento).
 
-Atividades do mesmo tipo mais próximas que `eventoJuntarSegundos` viram um evento só. Cada evento vira um clipe recortado dos trechos (`eventoPreSegundos` antes e `eventoPosSegundos` depois), com miniatura, e uma linha no registro do dia. Os clipes ficam fora do buffer e são apagados depois de `clipesDias` dias (`0` = nunca); os trechos não são tocados.
+Atividades do mesmo tipo mais próximas que `eventoJuntarSegundos` viram um evento só. Cada evento vira um clipe recortado dos trechos (`eventoPreSegundos` antes e `eventoPosSegundos` depois), com miniatura, e uma linha no registro do dia. Os clipes ficam fora do buffer e são apagados depois de `clipesDias` dias (`0` = nunca); os trechos não são tocados. Duas regras opcionais por espaço (desligadas por padrão): `clipesMaxGb` e `discoLivreMinGb` apagam os dias de clipes mais antigos (nunca o de hoje nem `gravacoes/guardados/`) e cada limpeza vai ao log.
 
 ```
 gravacoes/clipes/AAAA-MM-DD/HH-MM-SS-<tipo>.mp4   # clipe (tipo: movimento | som); HH-MM-SS = início do clipe
@@ -134,6 +134,8 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 | `clipePrioridade` | `abaixo` | prioridade do ffmpeg que recorta clipes e miniaturas (mesmos valores de `ffmpegPrioridade`), para não disputar CPU com a captura |
 | `miniaturaLargura` | 320 | largura da miniatura |
 | `clipesDias` | 30 | por quantos dias guardar clipes e registros (inteiro até 36500; `0` = sempre) |
+| `clipesMaxGb` | 0 | tamanho máximo da pasta `gravacoes/clipes/` em GB; acima disso apaga os dias mais antigos (`0` = sem limite) |
+| `discoLivreMinGb` | 0 | espaço livre mínimo, em GB, no disco das gravações; abaixo disso apaga os dias de clipes mais antigos (`0` = desligada) |
 
 ### Para os próximos cartões
 

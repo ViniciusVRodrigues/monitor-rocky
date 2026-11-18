@@ -27,6 +27,8 @@ export const PADROES = {
   trechoSegundos: 60,
   miniaturaLargura: 320,
   clipesDias: 30,
+  clipesMaxGb: 0,
+  discoLivreMinGb: 0,
 };
 
 const POSITIVOS = [
@@ -47,6 +49,8 @@ export function configDeteccao(cfg) {
   exigirNumero('clipeSondagensSimultaneas', c.clipeSondagensSimultaneas, { inteiro: true, min: 1, max: 16, descricao: 'um número inteiro de 1 a 16' });
   exigirNumero('clipeSondagemTimeoutSegundos', c.clipeSondagemTimeoutSegundos, { min: 0, max: 3600, descricao: 'um número de segundos, até 3600 (0 = sem limite)' });
   exigirNumero('clipesDias', c.clipesDias, { inteiro: true, min: 0, max: 36500, descricao: 'um número inteiro de dias, até 36500 (0 = nunca apagar)' });
+  exigirNumero('clipesMaxGb', c.clipesMaxGb, { min: 0, max: 1e6, descricao: 'um número de GB (0 = sem limite)' });
+  exigirNumero('discoLivreMinGb', c.discoLivreMinGb, { min: 0, max: 1e6, descricao: 'um número de GB (0 = desligada)' });
   exigirNumero('somLimiarDb', c.somLimiarDb, { maxExclusivo: 0, descricao: 'negativo (dBFS, ex.: -30)' });
   exigirNumero('movimentoLimiarPixel', c.movimentoLimiarPixel, { min: 0, max: 255, descricao: 'um número de 0 a 255' });
   exigirNumero('movimentoAreaMinima', c.movimentoAreaMinima, { minExclusivo: 0, max: 1, descricao: 'uma fração entre 0 e 1' });
