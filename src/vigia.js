@@ -6,6 +6,7 @@ import { carregarConfig, ConfigErro } from './config.js';
 import { supervisionar } from './supervisor.js';
 import { criarLogRotativo } from './log-rotativo.js';
 import { criarSaude } from './saude.js';
+import { aplicarPrioridade, prioridadeDaTarefa } from './prioridade.js';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -28,6 +29,28 @@ export function vigiar({ log = console.log, aoLinha = () => {}, ...opcoes }) {
     }
   };
   return supervisionar({ prefixoLog: 'monitor', ...opcoes, aoSaida, log });
+}
+
+/**
+ * Vigia o processo pai: quando ele some, chama `aoPerder` (uma vez). Sob a tarefa agendada o pai
+ * é o wscript, que fica esperando o vigia; `schtasks /End` mata o wscript mas NÃO o vigia
+ * (medido em 2026-11-18, ROCKY-12), então o vigia se encerra sozinho quando perde o pai.
+ * Devolve a função que para a vigilância.
+ */
+export function vigiarPai({
+  ppid, aoPerder, intervaloMs = 2000,
+  vivo = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } },
+  agendar = (f, ms) => setInterval(f, ms).unref(),
+  cancelar = (t) => clearInterval(t),
+}) {
+  if (!Number.isInteger(ppid) || ppid <= 0) return () => {};
+  let perdeu = false;
+  const timer = agendar(() => {
+    if (perdeu || vivo(ppid)) return;
+    perdeu = true;
+    aoPerder();
+  }, intervaloMs);
+  return () => cancelar(timer);
 }
 
 /** Encerra o monitor e o ffmpeg dele (a árvore toda) no Windows. */
@@ -59,6 +82,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     };
     // Gancho para o ROCKY-6 (avisos no celular): passe `aoAlerta` aqui (recebe { tipo, problema, mensagem, em }).
     const saude = criarSaude({ cfg, log, toast: cfg.alertaToast !== false, aoAlerta: () => {} });
+    // O Agendador só dá a prioridade da tarefa ao wscript; o node nasce Normal. Aplica ao vigia e ao monitor.
+    const prioridade = prioridadeDaTarefa(cfg.tarefaPrioridade);
+    aplicarPrioridade({ pid: process.pid, nome: prioridade, log });
     const arquivoPid = join(cfg.logPasta ?? join(raiz, 'logs'), 'vigia.pid');
     mkdirSync(dirname(arquivoPid), { recursive: true });
     writeFileSync(arquivoPid, String(process.pid));
@@ -67,6 +93,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       comando: process.execPath,
       args: [join(raiz, 'src', 'principal.js')],
       opcoes: { cwd: raiz },
+      prioridade,
       log,
       aoLinha: (l) => saude.registrarLinha(l),
       esperaInicialMs: (cfg.vigiaEsperaSegundos ?? 2) * 1000,
@@ -86,6 +113,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       await Promise.race([arquivoLog.aguardar(), new Promise((r) => setTimeout(r, 2000))]);
       process.exit(0);
     };
+    if (process.argv.includes('--sob-tarefa')) {
+      vigiarPai({ ppid: process.ppid, aoPerder: () => { log('A tarefa foi encerrada (o processo pai saiu): parando o vigia e o monitor.'); sair(); } });
+    }
     process.on('SIGINT', sair);
     process.on('SIGTERM', sair);
   } catch (e) {

@@ -2,6 +2,16 @@ import { spawn } from 'node:child_process';
 import { setPriority } from 'node:os';
 import { aplicarPrioridade } from './prioridade.js';
 
+/**
+ * Aviso do ffmpeg que não vale log (achado em 2026-11-18, ROCKY-12): no Windows o hls grava
+ * aovivo/index.m3u8.tmp e renomeia sobre index.m3u8; se outro processo (antivírus, indexador
+ * ou um leitor) está com o playlist aberto sem permitir troca, o rename falha com "Operation
+ * not permitted". Aconteceu 2 vezes em um dia; o hls reescreve o playlist a cada segmento, então
+ * a próxima volta o conserta e o ao vivo não quebra (mesmo comportamento descrito em
+ * https://github.com/jellyfin/jellyfin/issues/18436). Fica só a contagem, resumida ao fim.
+ */
+const RE_RENAME_HLS = /failed to rename file \S*\.m3u8\.tmp to \S*\.m3u8: Operation not permitted/;
+
 const pausar = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -60,6 +70,7 @@ export function supervisionar({
   let omitidas = 0;
   let ultima = null;
   let repetidas = 0;
+  let renomesIgnorados = 0;
   const janelaMs = Math.max(1, Number(logJanelaSegundos) || 10) * 1000;
   const maxLinhas = Math.max(1, Number(logLinhasPorJanela) || 20);
   const emitir = (m) => log(`[${prefixoLog}] ${m}`);
@@ -75,6 +86,7 @@ export function supervisionar({
   }
   function linhaErr(l) {
     if (!l.trim()) return;
+    if (RE_RENAME_HLS.test(l)) { renomesIgnorados++; return; }
     abrirJanela();
     if (l === ultima) { repetidas++; return; }
     fecharRepeticao();
@@ -91,6 +103,7 @@ export function supervisionar({
     if (restoErr) { const r = restoErr; restoErr = ''; linhaErr(r); }
     fecharRepeticao();
     ultima = null;
+    if (renomesIgnorados > 0) { const n = renomesIgnorados; renomesIgnorados = 0; emitir(`${n} avisos de rename do playlist HLS ignorados (arquivo em uso por outro programa; o próximo segmento corrige)`); }
   }
 
   const acordar = () => { const a = acorda; acorda = null; a?.(); };
