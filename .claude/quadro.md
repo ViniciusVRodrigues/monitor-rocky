@@ -8,10 +8,10 @@
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
-- **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18, sessão local_0e9bc858-e43b-45d9-b903-14322106bce3. Arquivos: servidor/seguranca, app (middleware), src/config.js, script novo, README.
-- **ROCKY-7: timeout no recorte de clipe + teste intermitente** (Sonnet) — change `timeout-recorte-clipe`, issue #19, sessão local_25506047-ff76-4096-86f0-bf5da01d7174. Arquivos: src/deteccao/, chave nova no config.json.
-- **ROCKY-12: estabilidade fina** (Sonnet) — change `estabilidade-fina`, issue #20, sessão local_16dfe9e6-913a-4bbb-b461-9984eb469889. Arquivos: tarefa, prioridade, vigia, supervisor, servico, ffmpeg-args, harness de testes. O `recuperou` do hls.js passou ao ROCKY-13.
-- **ROCKY-13: ajustes da página** (Opus) — change `ajustes-pagina`, issue #21, sessão local_fdb3790e-9f20-4733-96fb-0d20c7c05545. Arquivos: só web/ e testes web.
+- **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: servidor/seguranca, app (middleware), src/config.js, script novo, README.
+- **ROCKY-7: timeout no recorte de clipe + teste intermitente** (Sonnet) — change `timeout-recorte-clipe`, issue #19, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: src/deteccao/, chave nova no config.json.
+- **ROCKY-12: estabilidade fina** (Sonnet) — change `estabilidade-fina`, issue #20, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: tarefa, prioridade, vigia, supervisor, servico, ffmpeg-args, harness de testes. O `recuperou` do hls.js passou ao ROCKY-13.
+- **ROCKY-13: ajustes da página** (Opus) — change `ajustes-pagina`, issue #21, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: só web/ e testes web.
 
 ## Feito
 - **ROCKY-14: apagar e guardar gravações** (2026-11-17) — PR #16 e #17, issue #15 fechada, 231 testes. Apagar a hora (clipes, eventos e trechos, menos o trecho gravando; confirmação com a contagem) e um a um; "Guardar" em `gravacoes/guardados/` (fora da limpeza); abas [Linha do tempo | Guardados]; botões sempre à vista (ao lado a 768 px). Escolhas da pessoa: opção 1, A e A, manter 768. Falta: conferir no monitor real (tarefa 4.2, monitor parado por escolha da pessoa) e arquivar a change.
