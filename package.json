@@ -19,7 +19,8 @@
     "test": "node --test",
     "instalar-servico": "node scripts/servico.js instalar",
     "remover-servico": "node scripts/servico.js remover",
-    "vigia": "node src/vigia.js"
+    "vigia": "node src/vigia.js",
+    "tailscale": "node scripts/tailscale.js"
   },
   "dependencies": {
     "hls.js": "1.7.4"

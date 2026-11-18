@@ -74,6 +74,20 @@ export function carregarConfig(raiz) {
       !(Array.isArray(cfg.hostsPermitidos) && cfg.hostsPermitidos.every((h) => typeof h === 'string' && h.trim()))) {
     throw new ConfigErro('Configuração inválida: "hostsPermitidos" precisa ser uma lista de textos.');
   }
+  if (cfg.tailscaleLoginsPermitidos !== undefined) {
+    const l = cfg.tailscaleLoginsPermitidos;
+    if (!(Array.isArray(l) && l.every((x) => typeof x === 'string' && x.trim()))) {
+      throw new ConfigErro('Configuração inválida: "tailscaleLoginsPermitidos" precisa ser uma lista de logins (e-mails).');
+    }
+    cfg.tailscaleLoginsPermitidos = l.map((x) => x.trim().toLowerCase());
+  }
+  if (cfg.tailscaleExe !== undefined && !(typeof cfg.tailscaleExe === 'string' && cfg.tailscaleExe.trim())) {
+    throw new ConfigErro('Configuração inválida: "tailscaleExe" não pode ficar vazio.');
+  }
+  if (cfg.tailscaleHttpsPorta !== undefined &&
+      !(Number.isInteger(cfg.tailscaleHttpsPorta) && cfg.tailscaleHttpsPorta >= 1 && cfg.tailscaleHttpsPorta <= 65535)) {
+    throw new ConfigErro('Configuração inválida: "tailscaleHttpsPorta" precisa ser uma porta de 1 a 65535.');
+  }
   if (cfg.ouvirMp3Bitrate !== undefined && !String(cfg.ouvirMp3Bitrate).trim()) {
     throw new ConfigErro('Configuração inválida: "ouvirMp3Bitrate" não pode ficar vazio.');
   }

@@ -18,6 +18,27 @@ export function hostPermitido(host, porta, extras = []) {
   return extras.some((x) => String(x).toLowerCase() === h);
 }
 
+/**
+ * Acesso de fora pelo Tailscale Serve (ROCKY-4). O Serve encaminha para 127.0.0.1,
+ * mantém o Host da tailnet, acrescenta X-Forwarded-For e põe `Tailscale-User-Login`
+ * (apagando o que o cliente mandar). Pedido "de fora" = Host fora de
+ * 127.0.0.1/localhost:<porta>, ou com X-Forwarded-For, ou com identidade.
+ * De fora sem identidade é sempre recusado (Funnel e máquinas com tag não mandam
+ * identidade); com a lista de logins com itens, o login precisa estar nela.
+ * Devolve o motivo da recusa (texto pt-BR) ou null se o pedido pode seguir.
+ */
+export function recusaTailscale(headers, logins = [], porta) {
+  const h = String(headers.host ?? '').toLowerCase();
+  const local = h === `127.0.0.1:${porta}` || h === `localhost:${porta}`;
+  const temLogin = headers['tailscale-user-login'] !== undefined;
+  if (local && !temLogin && headers['x-forwarded-for'] === undefined) return null;
+  const login = String(headers['tailscale-user-login'] ?? '').trim().toLowerCase();
+  if (!login || login.includes(',')) return 'Acesso de fora só com a sua conta do Tailscale.';
+  const lista = (logins ?? []).map((x) => String(x).trim().toLowerCase());
+  if (lista.length && !lista.includes(login)) return 'Esta conta do Tailscale não tem acesso.';
+  return null;
+}
+
 /** Leituras: recusa pedidos marcados como de outro site. */
 export function leituraPermitida(req) {
   return req.headers['sec-fetch-site'] !== 'cross-site';

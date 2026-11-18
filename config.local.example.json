@@ -1,4 +1,6 @@
 {
   "video": "FHD Camera",
-  "audio": "Microfone (fifine  Microphone)"
+  "audio": "Microfone (fifine  Microphone)",
+  "hostsPermitidos": ["meu-pc.tail1234.ts.net"],
+  "tailscaleLoginsPermitidos": []
 }

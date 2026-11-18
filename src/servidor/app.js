@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { cabecalhosBase, hostPermitido, leituraPermitida, controlePermitido, json, naoEncontrado } from './seguranca.js';
+import { cabecalhosBase, hostPermitido, recusaTailscale, leituraPermitida, controlePermitido, json, naoEncontrado } from './seguranca.js';
 import { resolverGravacao, resolverEstatico, resolverVendor, servirArquivo } from './arquivos.js';
 import { listarDias, lerDia, diaValido } from './linha-tempo.js';
 import { executarControle, ControleErro, estadoAtual } from './controle.js';
@@ -158,6 +158,8 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
       if (!hostPermitido(req.headers.host, porta, cfg.hostsPermitidos)) {
         return json(res, 421, { ok: false, erro: 'Host não permitido.' });
       }
+      const recusa = recusaTailscale(req.headers, cfg.tailscaleLoginsPermitidos, porta);
+      if (recusa) return json(res, 403, { ok: false, erro: recusa });
       for (const fn of antes) {
         if (!(await fn(req, res))) return;
       }
