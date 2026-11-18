@@ -59,10 +59,11 @@ Plano do ux-ui, com as recomendações "A" escolhidas.
 - `role="group"` com `aria-label="Confirmar apagar"`. Os botões são "Sim, apagar" (`botao-perigo`) e "Cancelar".
 - Textos:
   - Item: "Apagar o clipe de Movimento das 16:04? Não dá para desfazer."
-  - Hora: "Apagar os 7 clipes e 12 min de gravação das 16h? Não dá para desfazer."
-    - Sem trechos ou com `apagarHoraTrechos: false`, sai a parte "e 12 min de gravação".
-    - Com 1 clipe, no singular: "o clipe".
-    - Sem clipes: "Apagar 12 min de gravação das 16h?".
+  - Hora: "Apagar 5 clipes e 12 trechos das 16h? Não dá para desfazer." (decisão da pessoa em 2026-11-17: a hora leva clipes e trechos).
+    - O trecho em andamento não entra na contagem.
+    - Sem trechos ou com `apagarHoraTrechos: false`, sai a parte "e 12 trechos".
+    - No singular: "1 clipe e 1 trecho".
+    - Sem clipes: "Apagar 12 trechos das 16h?".
   - Pasta: "Apagar a pasta 2026-11-17-rocky com 14 trechos? Não dá para desfazer."
   - Hora com algo guardado: acrescenta "O que está em Guardados continua."
 - Foco: ao abrir, vai para Cancelar. Esc e Cancelar fecham e devolvem o foco ao botão que abriu.
@@ -100,7 +101,7 @@ Plano do ux-ui, com as recomendações "A" escolhidas.
 ### Acessibilidade
 
 - Todo botão mede ≥ 48×48 px.
-- O aria-label começa pelo texto visível, por exemplo: "Guardar clipe de Movimento das 16:04", "Apagar clipe de Som das 16:12", "Guardar trecho 16:00–16:12 com vídeo", "Apagar esta hora, 16h, 7 clipes", "Tocar pasta 2026-11-17-rocky".
+- O aria-label começa pelo texto visível, por exemplo: "Guardar clipe de Movimento das 16:04", "Apagar clipe de Som das 16:12", "Guardar trecho 16:00–16:12 com vídeo", "Apagar esta hora, 16h, 5 clipes e 12 trechos", "Tocar pasta 2026-11-17-rocky".
 
 ### Critérios de aceite
 

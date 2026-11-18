@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  textoConfirmaItem, textoConfirmaHora, textoConfirmaPasta, minutosDeGravacao, urlsGuardadas,
+  textoConfirmaItem, textoConfirmaHora, textoConfirmaPasta, urlsGuardadas,
   estaGuardado, temGuardado, cruza, notaGuardado, textoParcial,
   anuncioItemApagado, anuncioHoraApagada, anuncioPastaApagada, anuncioGuardado, textoFalhaApagar,
 } from '../web/js/gravacoes.js';
@@ -11,25 +11,16 @@ test('confirmação do item', () => {
 });
 
 test('confirmação da hora: clipes e gravação, singular e plural', () => {
-  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 7, minutos: 12 }), 'Apagar os 7 clipes e 12 min de gravação das 16h? Não dá para desfazer.');
-  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 1, minutos: 12 }), 'Apagar o clipe e 12 min de gravação das 16h? Não dá para desfazer.');
-  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 7, minutos: 0 }), 'Apagar os 7 clipes das 16h? Não dá para desfazer.');
-  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 0, minutos: 12 }), 'Apagar 12 min de gravação das 16h? Não dá para desfazer.');
-  assert.match(textoConfirmaHora({ hora: '16h', clipes: 2, minutos: 3, comGuardado: true }), / Não dá para desfazer\. O que está em Guardados continua\.$/);
+  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 5, trechos: 12 }), 'Apagar 5 clipes e 12 trechos das 16h? Não dá para desfazer.');
+  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 1, trechos: 1 }), 'Apagar 1 clipe e 1 trecho das 16h? Não dá para desfazer.');
+  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 7, trechos: 0 }), 'Apagar 7 clipes das 16h? Não dá para desfazer.');
+  assert.equal(textoConfirmaHora({ hora: '16h', clipes: 0, trechos: 12 }), 'Apagar 12 trechos das 16h? Não dá para desfazer.');
+  assert.match(textoConfirmaHora({ hora: '16h', clipes: 2, trechos: 3, comGuardado: true }), / Não dá para desfazer\. O que está em Guardados continua\.$/);
 });
 
 test('confirmação da pasta', () => {
   assert.equal(textoConfirmaPasta('2026-11-17-rocky', 14), 'Apagar a pasta 2026-11-17-rocky com 14 trechos? Não dá para desfazer.');
   assert.equal(textoConfirmaPasta('x', 1), 'Apagar a pasta x com 1 trecho? Não dá para desfazer.');
-});
-
-test('minutos de gravação: ignora o trecho em andamento', () => {
-  const t = [{ url: 'a' }, { url: 'b' }, { url: 'c', emAndamento: true }];
-  assert.equal(minutosDeGravacao(t, 60), 2);
-  assert.equal(minutosDeGravacao(t, 600), 20);
-  assert.equal(minutosDeGravacao([], 60), 0);
-  assert.equal(minutosDeGravacao([{ url: 'a' }], 20), 1); // nunca 0 se há trecho
-  assert.equal(minutosDeGravacao([{ url: 'c', emAndamento: true }], 60), 0);
 });
 
 test('urls guardadas, estaGuardado e temGuardado', () => {
