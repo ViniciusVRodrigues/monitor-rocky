@@ -6,7 +6,7 @@ import {
   posicaoNaRegua, agruparBlocos, nivelIntensidade, rotuloTipo, rotuloHora, textoEventos, textoPilula, rotuloDia, vizinhosDoDia,
 } from './linha-tempo.js';
 import {
-  textoConfirmaItem, textoConfirmaHora, textoConfirmaPasta, minutosDeGravacao, urlsGuardadas, estaGuardado, temGuardado,
+  textoConfirmaItem, textoConfirmaHora, textoConfirmaPasta, urlsGuardadas, estaGuardado, temGuardado,
   cruza, notaGuardado, textoParcial, textoFalhaApagar, anuncioItemApagado, anuncioHoraApagada, anuncioPastaApagada, anuncioGuardado,
 } from './gravacoes.js';
 
@@ -389,16 +389,15 @@ export function criarDia({ cfg, aoTocar, player = null, anunciar = () => {}, peg
   function rodapeHora(item, painel) {
     const clipes = item.eventos.length;
     const trechos = cfg.apagarHoraTrechos ? item.blocos.flatMap((b) => b.trechos) : [];
-    const minutos = minutosDeGravacao(trechos, cfg.trechoSegundos);
-    if (!clipes && !minutos) return null;
+    const urlsTrechos = trechos.filter((t) => !t.emAndamento).map((t) => t.url);
+    if (!clipes && !urlsTrechos.length) return null;
     const nome = rotuloHora(item.hora);
     const urlsClipes = item.eventos.map((e) => e.clipe).filter(Boolean);
-    const urlsTrechos = trechos.filter((t) => !t.emAndamento).map((t) => t.url);
     const rodape = el('div', 'hora-rodape');
-    const resumo = clipes ? (clipes === 1 ? '1 clipe' : `${clipes} clipes`) : `${minutos} min de gravação`;
+    const resumo = [clipes && (clipes === 1 ? '1 clipe' : `${clipes} clipes`), urlsTrechos.length && (urlsTrechos.length === 1 ? '1 trecho' : `${urlsTrechos.length} trechos`)].filter(Boolean).join(' e ');
     const b = botaoAcao('Apagar esta hora', `Apagar esta hora, ${nome}, ${resumo}`, 'botao-perigo');
     b.addEventListener('click', () => abrirConfirma(rodape, b, {
-      texto: textoConfirmaHora({ hora: nome, clipes, minutos, comGuardado: temGuardado([...urlsClipes, ...urlsTrechos], conjuntoGuardado) }),
+      texto: textoConfirmaHora({ hora: nome, clipes, trechos: urlsTrechos.length, comGuardado: temGuardado([...urlsClipes, ...urlsTrechos], conjuntoGuardado) }),
       urlsAfetadas: [...urlsClipes, ...urlsTrechos],
       enviar: () => postarJson('/api/apagar/hora', {
         dia: diaAtual, hora: item.hora, ids: item.eventos.map((e) => e.id), trechos: Boolean(cfg.apagarHoraTrechos),

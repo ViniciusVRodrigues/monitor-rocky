@@ -9,20 +9,12 @@ export function textoConfirmaItem(tipo, hm) {
   return `Apagar o clipe de ${tipo} das ${hm}? ${NAO_DESFAZ}`;
 }
 
-/** Minutos de gravação de uma hora: trechos que não estão em andamento × trechoSegundos. */
-export function minutosDeGravacao(trechos, trechoSegundos) {
-  const n = trechos.filter((t) => !t.emAndamento).length;
-  if (!n) return 0;
-  return Math.max(1, Math.round((n * trechoSegundos) / 60));
-}
-
-/** Confirmação de "Apagar esta hora". `hora` já vem como "16h". */
-export function textoConfirmaHora({ hora, clipes, minutos, comGuardado = false }) {
-  let o;
-  if (clipes > 0 && minutos > 0) o = `${clipes === 1 ? 'o clipe' : `os ${clipes} clipes`} e ${minutos} min de gravação`;
-  else if (clipes > 0) o = clipes === 1 ? 'o clipe' : `os ${clipes} clipes`;
-  else o = `${minutos} min de gravação`;
-  return `Apagar ${o} das ${hora}? ${NAO_DESFAZ}${comGuardado ? ' O que está em Guardados continua.' : ''}`;
+/** Confirmação de "Apagar esta hora": "Apagar 5 clipes e 12 trechos das 16h?". `hora` já vem como "16h". */
+export function textoConfirmaHora({ hora, clipes, trechos = 0, comGuardado = false }) {
+  const partes = [];
+  if (clipes > 0) partes.push(plural(clipes, 'clipe', 'clipes'));
+  if (trechos > 0) partes.push(plural(trechos, 'trecho', 'trechos'));
+  return `Apagar ${partes.join(' e ')} das ${hora}? ${NAO_DESFAZ}${comGuardado ? ' O que está em Guardados continua.' : ''}`;
 }
 
 export function textoConfirmaPasta(rotulo, trechos) {
