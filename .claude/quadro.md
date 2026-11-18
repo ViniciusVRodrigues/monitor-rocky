@@ -4,9 +4,9 @@
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram); ver detector de latido com YAMNet (referência: detector de áudio do Frigate) | Opus | ROCKY-2, ROCKY-4 |
-| ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
-| ROCKY-15 | Picos do event loop: `acharTrechos` em `src/deteccao/clipes.js` sonda com ffprobe todos os trechos de 3 dias em `Promise.all` (240 spawns = loop parado ~15 s): descartar trechos fora da janela antes de sondar, limitar a concorrência a 2-4 e pôr tempo limite no `sondar`. Junto: pôr no `config.json` as chaves do ROCKY-4 (`tailscaleLoginsPermitidos`, `tailscaleExe`, `tailscaleHttpsPorta`) | Sonnet | — |
-| ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
+| ROCKY-8 | Validação estrita dos números da config (change `config-numeros-estritos`, issue #26; 2º da fila, depois do 15) | Sonnet | — |
+| ROCKY-15 | Clipes sem travar o event loop (change `clipes-sem-travar`, issue #25; 1º da fila aprovada: 15 → 8 → 9): filtrar trechos fora da janela antes do ffprobe, limitar concorrência, tempo limite no `sondar`; e chaves do Tailscale no `config.json` | Sonnet | — |
+| ROCKY-9 | Retenção dos clipes também por espaço em disco (change `retencao-por-espaco`, issue #27; 3º da fila, depois do 8) | Sonnet | — |
 
 ## Fazendo
 - **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Falta (pessoa): instalar o Tailscale, ligar MagicDNS e HTTPS, pôr o host .ts.net em `hostsPermitidos`, abrir pelo celular (4.1) e conferir que nada está público (4.2). Perguntas do convidado e dos e-mails com a pessoa. Não arquivar a change antes.
