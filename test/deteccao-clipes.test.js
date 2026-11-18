@@ -276,3 +276,74 @@ test('clipe: o executor recebe timeoutMs (padrão 120 s; 0 = sem limite)', async
     assert.equal(b.chamadas[0].extra.timeoutMs, 0);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });
+
+// --- ROCKY-15: busca de trechos sem travar o event loop (executor falso, sem ffprobe de verdade) ---
+
+function pastaSintetica(dia, nomes) {
+  const p = mkdtempSync(join(tmpdir(), 'rocky-sint-'));
+  mkdirSync(join(p, 'trechos', dia), { recursive: true });
+  for (const n of nomes) writeFileSync(join(p, 'trechos', dia, n), '');
+  return p;
+}
+const nomesDoDia = (n) => Array.from({ length: n }, (_, i) => {
+  const s = i * 60; // um trecho por minuto
+  const f = (x) => String(x).padStart(2, '0');
+  return `${f(Math.floor(s / 3600))}-${f(Math.floor((s % 3600) / 60))}-00.mp4`;
+});
+const respostaOk = (dur = 60) => ({ code: 0, out: JSON.stringify({ format: { duration: String(dur) }, streams: [{ codec_type: 'video' }] }), err: '' });
+
+test('acharTrechos: com 240 trechos e um evento de 30 s, só os que cobrem a janela são sondados', async () => {
+  const dia = '2026-03-10';
+  const p = pastaSintetica(dia, nomesDoDia(240));
+  try {
+    const sondados = [];
+    const executor = async (cmd, args) => { sondados.push(args.at(-1)); return respostaOk(); };
+    const ini = new Date(2026, 2, 10, 2, 0, 10).getTime();
+    const r = await acharTrechos({ pasta: p, inicioMs: ini, fimMs: ini + 30000, trechoSegundos: 60, executor });
+    assert.ok(sondados.length <= 3, `sondou ${sondados.length}`);
+    assert.ok(sondados.length >= 1);
+    assert.ok(r.length >= 1 && r.length <= 3);
+  } finally { rmSync(p, { recursive: true, force: true }); }
+});
+
+test('acharTrechos: nunca passa do limite de sondagens simultâneas', async () => {
+  const dia = '2026-03-10';
+  const p = pastaSintetica(dia, nomesDoDia(40));
+  try {
+    for (const limite of [1, 3]) {
+      let ativas = 0; let maximo = 0; let total = 0;
+      const executor = async () => {
+        ativas++; total++; maximo = Math.max(maximo, ativas);
+        await new Promise((r) => setTimeout(r, 5));
+        ativas--; return respostaOk();
+      };
+      const ini = new Date(2026, 2, 10, 0, 0, 0).getTime();
+      const r = await acharTrechos({ pasta: p, inicioMs: ini, fimMs: ini + 40 * 60000, trechoSegundos: 60, sondagensSimultaneas: limite, executor });
+      assert.equal(total, 40);
+      assert.equal(r.length, 40);
+      assert.equal(maximo, limite);
+    }
+  } finally { rmSync(p, { recursive: true, force: true }); }
+});
+
+test('acharTrechos: ffprobe que não termina é morto no tempo limite, vai ao log e a busca segue', async () => {
+  const dia = '2026-03-10';
+  const p = pastaSintetica(dia, nomesDoDia(2));
+  try {
+    const logs = [];
+    let n = 0;
+    // o primeiro "ffprobe" é um processo real que nunca termina; o segundo responde normal
+    const executor = (cmd, args, o) => (n++ === 0
+      ? executar(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], o)
+      : Promise.resolve(respostaOk()));
+    const ini = new Date(2026, 2, 10, 0, 0, 0).getTime();
+    const t0 = Date.now();
+    const r = await acharTrechos({
+      pasta: p, inicioMs: ini, fimMs: ini + 120000, trechoSegundos: 60,
+      sondagensSimultaneas: 1, sondagemTimeoutMs: 300, executor, log: (m) => logs.push(m),
+    });
+    assert.ok(Date.now() - t0 < 5000);
+    assert.equal(r.length, 1);
+    assert.ok(logs.some((m) => /tempo limite/.test(m)), logs.join('|'));
+  } finally { rmSync(p, { recursive: true, force: true }); }
+});

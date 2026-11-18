@@ -21,16 +21,19 @@ export const PADROES = {
   clipePreset: 'veryfast',
   clipeCrf: 26,
   clipeTimeoutSegundos: 120,
+  clipeSondagensSimultaneas: 3,
+  clipeSondagemTimeoutSegundos: 15,
+  trechoSegundos: 60,
   miniaturaLargura: 320,
   clipesDias: 30,
 };
 
 const POSITIVOS = [
   'somJanelaMs', 'movimentoLargura', 'movimentoFps', 'movimentoQuadrosSeguidos',
-  'eventoJuntarSegundos', 'eventoMaxSegundos', 'miniaturaLargura',
+  'eventoJuntarSegundos', 'eventoMaxSegundos', 'miniaturaLargura', 'clipeSondagensSimultaneas', 'trechoSegundos',
 ];
 const NAO_NEGATIVOS = [
-  'somDuracaoMinimaMs', 'eventoPreSegundos', 'eventoPosSegundos', 'clipeMargemSegundos', 'clipeCrf', 'clipeTimeoutSegundos', 'clipesDias',
+  'somDuracaoMinimaMs', 'eventoPreSegundos', 'eventoPosSegundos', 'clipeMargemSegundos', 'clipeCrf', 'clipeTimeoutSegundos', 'clipeSondagemTimeoutSegundos', 'clipesDias',
 ];
 
 /** Junta os padrões da detecção com a config carregada e valida (mensagens em pt-BR). */
@@ -40,6 +43,8 @@ export function configDeteccao(cfg) {
   for (const k of POSITIVOS) if (!(Number(c[k]) > 0)) erro(`"${k}" precisa ser um número maior que zero.`);
   for (const k of NAO_NEGATIVOS) if (!(Number(c[k]) >= 0)) erro(`"${k}" precisa ser um número maior ou igual a zero.`);
   if (!(Number.isFinite(Number(c.clipeTimeoutSegundos)) && Number(c.clipeTimeoutSegundos) <= 86400)) erro('"clipeTimeoutSegundos" precisa ser um número de segundos, até 86400 (0 = sem limite).');
+  if (!(Number.isInteger(Number(c.clipeSondagensSimultaneas)) && Number(c.clipeSondagensSimultaneas) <= 16)) erro('"clipeSondagensSimultaneas" precisa ser um número inteiro de 1 a 16.');
+  if (!(Number(c.clipeSondagemTimeoutSegundos) <= 3600)) erro('"clipeSondagemTimeoutSegundos" precisa ser um número de segundos, até 3600 (0 = sem limite).');
   if (!(Number.isInteger(Number(c.clipesDias)) && Number(c.clipesDias) <= 36500)) erro('"clipesDias" precisa ser um número inteiro de dias, até 36500 (0 = nunca apagar).');
   if (!(Number(c.somLimiarDb) < 0)) erro('"somLimiarDb" precisa ser negativo (dBFS, ex.: -30).');
   if (!(c.movimentoLimiarPixel >= 0 && c.movimentoLimiarPixel <= 255)) erro('"movimentoLimiarPixel" vai de 0 a 255.');
