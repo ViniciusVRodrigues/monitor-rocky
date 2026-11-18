@@ -1,6 +1,6 @@
 # monitor-rocky
 
-Babá eletrônica caseira para o Rocky, um filhote de 3 meses. Usa uma webcam e um microfone USB no PC (Windows), grava o tempo todo, marca os momentos em que há movimento ou barulho e mostra tudo numa página web protegida por login do Google.
+Babá eletrônica caseira para o Rocky, um filhote de 3 meses. Usa uma webcam e um microfone USB no PC (Windows), grava o tempo todo, marca os momentos em que há movimento ou barulho e mostra tudo numa página web vista de fora só pela rede privada do Tailscale.
 
 ## Como funciona (plano)
 
@@ -11,7 +11,7 @@ webcam + microfone ──ffmpeg──▶ gravação em trechos (MP4) + ao vivo (
                                      │
                      servidor Node local (127.0.0.1)
                                      │
-               Cloudflare Tunnel ──▶ Cloudflare Access (login Google, só e-mails liberados)
+             Tailscale Serve (HTTPS só dentro da tailnet, sem Funnel)
                                      │
                                navegador / celular
 ```
@@ -20,16 +20,16 @@ webcam + microfone ──ffmpeg──▶ gravação em trechos (MP4) + ao vivo (
 - **Gravação**: trechos de alguns minutos num buffer das últimas 4 horas (configurável); os eventos viram clipes guardados à parte.
 - **Eventos**: movimento (diferença entre quadros) e som (volume acima do limiar, como latido ou choro), com miniatura.
 - **Web**: ao vivo, linha do tempo do dia com os eventos e reprodução dos trechos.
-- **Acesso remoto**: nada de porta aberta no roteador. O servidor só escuta em `127.0.0.1`; o `cloudflared` cria o túnel e o Cloudflare Access exige login Google antes de chegar ao PC. O servidor também confere o JWT do Access.
+- **Acesso remoto**: nada de porta aberta no roteador nem nada público. O servidor só escuta em `127.0.0.1`; o Tailscale Serve leva a página, com HTTPS, só a quem está na sua tailnet, e o servidor confere a identidade do Tailscale (veja [Acesso de fora](#acesso-de-fora-rocky-4)).
 
 ## Privacidade
 
-As gravações ficam só no seu disco, fora do repositório (`gravacoes/` está no `.gitignore`). Nada é enviado para terceiros além do que passa pelo túnel quando alguém logado assiste.
+As gravações ficam só no seu disco, fora do repositório (`gravacoes/` está no `.gitignore`). Nada é enviado para terceiros além do que passa pela tailnet (criptografada de ponta a ponta) quando alguém dela assiste.
 
 ## Requisitos
 
 - Windows 10/11, Node.js 20+, `ffmpeg` no PATH
-- Conta Cloudflare com um domínio (para o túnel com nome e o Access)
+- Conta no Tailscale (plano gratuito) para ver de fora
 
 ## Captura e gravação (ROCKY-1)
 
@@ -164,14 +164,14 @@ Ao parar o vigia, o monitor e o ffmpeg são encerrados à força (o último trec
 
 ## Servidor e página (ROCKY-3)
 
-`npm install` (uma vez, traz o `hls.js`) e `npm start` sobem a captura e o servidor HTTP, que escuta só em `127.0.0.1`. Abra `http://127.0.0.1:8321/`. Acesso de fora só pelo túnel (ROCKY-4). Ctrl+C encerra tudo.
+`npm install` (uma vez, traz o `hls.js`) e `npm start` sobem a captura e o servidor HTTP, que escuta só em `127.0.0.1`. Abra `http://127.0.0.1:8321/`. Acesso de fora só pelo Tailscale (veja [Acesso de fora](#acesso-de-fora-rocky-4)). Ctrl+C encerra tudo.
 
 Chaves novas do `config.json` (sobrepostas por `config.local.json`):
 
 | Chave | Padrão | Para quê |
 | --- | --- | --- |
 | `servidorPorta` | 8321 | porta do servidor (sempre em 127.0.0.1) |
-| `hostsPermitidos` | `[]` | hosts extras aceitos no cabeçalho Host (ex.: o domínio do túnel) |
+| `hostsPermitidos` | `[]` | hosts extras aceitos no cabeçalho Host (ex.: `meu-pc.tail1234.ts.net`, o nome da máquina na tailnet) |
 | `ouvirModo` | `auto` | `auto`, `pcm` ou `mp3` |
 | `ouvirSiteMax` | 4 | ouvintes simultâneos do site, por modo |
 | `ouvirMp3Bitrate` | `32k` | bitrate do MP3 ao vivo |
@@ -206,6 +206,39 @@ Rotas (todas `POST` com JSON e o cabeçalho `X-Rocky: 1`, como os controles):
 - `/api/guardados/apagar` `{ nome }`.
 
 `GET /api/guardados` lista os guardados. O contrato completo está em `openspec/changes/apagar-e-guardar-gravacoes/design.md`.
+
+## Acesso de fora (ROCKY-4)
+
+A página é vista de fora (celular, PC do trabalho, um convidado) pelo **Tailscale Serve**, que publica a porta do monitor com HTTPS **só dentro da sua tailnet** (a rede privada do Tailscale). Nada fica público: o servidor segue só em `127.0.0.1`, nenhuma porta é aberta no roteador ou no firewall, e o **Tailscale Funnel nunca é usado** (o script recusa ligar se encontrar Funnel ativo).
+
+### Passo a passo
+
+1. **Instale o Tailscale** no PC do monitor (https://tailscale.com/download/windows) e no celular (App Store ou Google Play). Entre com a mesma conta nos dois e, se o painel pedir, aprove a máquina.
+2. No painel (https://login.tailscale.com/admin/dns), ligue o **MagicDNS** e os **HTTPS Certificates**. Anote o nome da máquina, algo como `meu-pc.tail1234.ts.net`.
+3. No `config.local.json`, ponha esse nome em `hostsPermitidos` (minúsculas, sem porta e sem ponto no fim) e, se quiser, a lista de logins em `tailscaleLoginsPermitidos` (veja abaixo). Reinicie o monitor (`npm run remover-servico` e `npm run instalar-servico`, ou pare e rode `npm start` de novo): a configuração só é lida ao subir.
+4. Rode `npm run tailscale -- ligar`. Ele confere que não há Funnel, liga o Serve em segundo plano (`tailscale serve --bg --https=443 http://127.0.0.1:<servidorPorta>`) e mostra o endereço. Se o nome não estiver em `hostsPermitidos`, ele avisa (sem isso a página responde 421).
+5. No celular, com o Tailscale conectado, abra `https://meu-pc.tail1234.ts.net/`.
+6. **Convidado**: no painel, em **Machines**, abra o PC do monitor e use **Share** para compartilhar só esta máquina com o e-mail do convidado. Ele instala o Tailscale, aceita o convite e abre o mesmo endereço. O login dele chega no cabeçalho de identidade; se a lista de logins tiver itens, acrescente o dele.
+
+Outros comandos: `npm run tailscale -- estado` (Serve ligado ou não, Funnel, endereço) e `npm run tailscale -- desligar` (remove só esta entrada do Serve; nada mais é visto de fora).
+
+### Quem pode entrar
+
+O Serve manda em todo pedido o cabeçalho `Tailscale-User-Login` com o login de quem abriu (e apaga o que o cliente tentar mandar). O servidor trata como **de fora** todo pedido com Host diferente de `127.0.0.1:<porta>`/`localhost:<porta>`, com `X-Forwarded-For` ou com esse cabeçalho, e então:
+
+- sem identidade do Tailscale, recusa sempre (403), mesmo com a lista vazia. Isso cobre o Funnel e máquinas com tag, que não mandam identidade;
+- com `tailscaleLoginsPermitidos` vazio, aceita qualquer pessoa da tailnet (inclusive quem recebeu a máquina compartilhada);
+- com a lista preenchida, só aceita os logins dela (sem diferenciar maiúsculas).
+
+A página aberta no próprio PC (`http://127.0.0.1:8321/`) segue sem login.
+
+| Chave | Padrão | Para quê |
+| --- | --- | --- |
+| `tailscaleLoginsPermitidos` | `[]` | logins do Tailscale (e-mails) que podem ver de fora; vazio = qualquer pessoa da tailnet |
+| `tailscaleExe` | `tailscale` | caminho do `tailscale.exe`, se não estiver no PATH |
+| `tailscaleHttpsPorta` | 443 | porta HTTPS do Serve na tailnet (com outra porta, o host em `hostsPermitidos` leva `:porta`) |
+
+Referências: [Tailscale Serve](https://tailscale.com/kb/1312/serve) (cabeçalhos de identidade, uso com localhost) e [`tailscale serve`](https://tailscale.com/docs/reference/tailscale-cli/serve.md) (sintaxe).
 
 ## Estado
 

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cenario, monitorFalso } from './servidor-util.js';
+import { recusaTailscale } from '../src/servidor/seguranca.js';
 
 test('Host desconhecido dá 421; os permitidos passam', async () => {
   const c = await cenario();
@@ -8,7 +9,7 @@ test('Host desconhecido dá 421; os permitidos passam', async () => {
     assert.equal((await c.req('/api/estado', { headers: { Host: 'evil.example' } })).status, 421);
     assert.equal((await c.req('/api/estado', { headers: { Host: `127.0.0.1:${c.porta + 1}` } })).status, 421);
     assert.equal((await c.req('/api/estado', { headers: { Host: `localhost:${c.porta}` } })).status, 200);
-    assert.equal((await c.req('/api/estado', { headers: { Host: 'ROCKY.exemplo.test' } })).status, 200);
+    assert.equal((await c.req('/api/estado', { headers: { Host: 'ROCKY.exemplo.test', 'Tailscale-User-Login': 'a@b.c' } })).status, 200);
   } finally { await c.fim(); }
 });
 
@@ -150,4 +151,72 @@ test('leituras da API recusam Sec-Fetch-Site cross-site', async () => {
     assert.equal((await c.req('/api/estado', { headers: { 'Sec-Fetch-Site': 'same-origin' } })).status, 200);
     assert.equal((await c.req('/', { headers: { 'Sec-Fetch-Site': 'cross-site' } })).status, 200);
   } finally { await c.fim(); }
+});
+
+// ROCKY-4: acesso de fora pelo Tailscale Serve (identidade e logins permitidos).
+const TS = 'rocky.exemplo.test';
+
+test('acesso local (127.0.0.1/localhost) segue sem identidade do Tailscale', async () => {
+  const c = await cenario({ cfg: { tailscaleLoginsPermitidos: ['eu@exemplo.com'] } });
+  try {
+    assert.equal((await c.req('/api/estado')).status, 200);
+    assert.equal((await c.req('/', { headers: { Host: `localhost:${c.porta}` } })).status, 200);
+  } finally { await c.fim(); }
+});
+
+test('pelo host da tailnet sem identidade dá 403, mesmo com a lista vazia', async () => {
+  const c = await cenario();
+  try {
+    const r = await c.req('/api/estado', { headers: { Host: TS } });
+    assert.equal(r.status, 403);
+    assert.match(r.json.erro, /Tailscale/);
+    assert.equal((await c.req('/', { headers: { Host: TS, 'Tailscale-User-Login': '  ' } })).status, 403);
+  } finally { await c.fim(); }
+});
+
+test('pedido encaminhado (X-Forwarded-For) sem identidade dá 403 mesmo com Host local', async () => {
+  const c = await cenario();
+  try {
+    assert.equal((await c.req('/api/estado', { headers: { 'X-Forwarded-For': '100.64.0.7' } })).status, 403);
+    assert.equal((await c.req('/api/estado', { headers: { 'X-Forwarded-For': '100.64.0.7', 'Tailscale-User-Login': 'x@y.z' } })).status, 200);
+  } finally { await c.fim(); }
+});
+
+test('lista vazia: qualquer pessoa da tailnet com identidade entra', async () => {
+  const c = await cenario({ cfg: { tailscaleLoginsPermitidos: [] } });
+  try {
+    assert.equal((await c.req('/api/estado', { headers: { Host: TS, 'Tailscale-User-Login': 'qualquer@exemplo.com' } })).status, 200);
+  } finally { await c.fim(); }
+  const c2 = await cenario({ cfg: { tailscaleLoginsPermitidos: undefined } });
+  try {
+    assert.equal((await c2.req('/', { headers: { Host: TS, 'Tailscale-User-Login': 'qualquer@exemplo.com' } })).status, 200);
+  } finally { await c2.fim(); }
+});
+
+test('lista com itens: login na lista entra (sem diferenciar caixa); fora da lista dá 403 e nenhuma rota roda', async () => {
+  const c = await cenario({ cfg: { tailscaleLoginsPermitidos: ['eu@exemplo.com', 'convidado@exemplo.com'] } });
+  try {
+    assert.equal((await c.req('/api/estado', { headers: { Host: TS, 'Tailscale-User-Login': 'Convidado@Exemplo.com' } })).status, 200);
+    const fora = await c.req('/api/estado', { headers: { Host: TS, 'Tailscale-User-Login': 'estranho@example.com' } });
+    assert.equal(fora.status, 403);
+    assert.equal(fora.headers['cache-control'], 'no-store');
+    const p = await c.postar('parar', { Host: TS, 'Tailscale-User-Login': 'estranho@example.com' });
+    assert.equal(p.status, 403);
+    assert.equal(c.monitor.gravador.estado(), 'gravando', 'o controle não rodou');
+    assert.equal((await c.req('/api/estado', { headers: { Host: TS } })).status, 403);
+    const dois = await c.req('/api/estado', { headers: { Host: TS, 'Tailscale-User-Login': 'eu@exemplo.com, estranho@example.com' } });
+    assert.equal(dois.status, 403, 'valor com vírgula (cabeçalho repetido) é recusado');
+  } finally { await c.fim(); }
+});
+
+test('recusaTailscale: função pura', () => {
+  const local = { host: '127.0.0.1:8321' };
+  assert.equal(recusaTailscale(local, [], 8321), null);
+  assert.equal(recusaTailscale({ host: 'LOCALHOST:8321' }, ['a@b.c'], 8321), null);
+  assert.ok(recusaTailscale({ host: '127.0.0.1:9999' }, [], 8321), 'outra porta conta como de fora');
+  assert.ok(recusaTailscale({ host: 'x.ts.net' }, [], 8321));
+  assert.equal(recusaTailscale({ host: 'x.ts.net', 'tailscale-user-login': 'a@b.c' }, [], 8321), null);
+  assert.equal(recusaTailscale({ host: 'x.ts.net', 'tailscale-user-login': ' A@B.C ' }, ['a@b.c'], 8321), null);
+  assert.ok(recusaTailscale({ host: 'x.ts.net', 'tailscale-user-login': 'z@b.c' }, ['a@b.c'], 8321));
+  assert.ok(recusaTailscale({ host: '127.0.0.1:8321', 'tailscale-user-login': 'z@b.c' }, ['a@b.c'], 8321), 'identidade fora da lista é recusada mesmo com Host local');
 });
