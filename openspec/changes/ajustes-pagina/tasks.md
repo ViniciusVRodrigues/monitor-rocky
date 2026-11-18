@@ -8,7 +8,7 @@
 - [x] 2.4 Player em 1280 px conforme a escolha da pessoa.
 
 ## 3. Entrega
-- [ ] 3.1 Prints em 390, 768, 1280 e 1920 px e zoom 200%, conferidos pela sessão; ux-ui em modo validação.
+- [x] 3.1 Prints em 390, 768, 1280 e 1920 px e zoom 200%, conferidos pela sessão; ux-ui em modo validação.
 
 ## Notas (2026-11-18)
 - Plano do ux-ui: fica o botão grande ("Toque para ouvir o Rocky"); sai o overlay sobre o vídeo (no ARZOPA ele escurecia o vídeo para sempre). O mini do cabeçalho diz "Ativar som".
