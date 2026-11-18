@@ -24,7 +24,11 @@ import { aplicarPrioridade } from '../prioridade.js';
 const RE_DIA = /^(\d{4})-(\d{2})-(\d{2})$/;
 const RE_TRECHO = /^(\d{2})-(\d{2})-(\d{2})\.mp4$/;
 
-function executar(cmd, args, { capturarStdout = false, prioridade = null, definirPrioridade, log } = {}) {
+/**
+ * Roda um processo e junta a saída. Com `timeoutMs` > 0, o processo é morto (SIGKILL) ao estourar
+ * e a promessa rejeita, para que um ffmpeg travado não segure a fila de clipes.
+ */
+export function executar(cmd, args, { capturarStdout = false, prioridade = null, definirPrioridade, log, timeoutMs = 0 } = {}) {
   return new Promise((resolve, reject) => {
     let p;
     try { p = spawn(cmd, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
@@ -34,8 +38,15 @@ function executar(cmd, args, { capturarStdout = false, prioridade = null, defini
     let err = '';
     p.stdout.on('data', (d) => { if (capturarStdout) out += d; });
     p.stderr.on('data', (d) => { err += d; if (err.length > 20000) err = err.slice(-10000); });
-    p.on('error', reject);
-    p.on('close', (code) => resolve({ code, out, err }));
+    let relogio = null;
+    if (timeoutMs > 0) {
+      relogio = setTimeout(() => {
+        try { p.kill('SIGKILL'); } catch { /* já saiu */ }
+        reject(new Error(`ffmpeg passou do tempo limite de ${Math.round(timeoutMs / 1000)} s e foi encerrado`));
+      }, Math.min(timeoutMs, 2 ** 31 - 1)); // acima disso o setTimeout dispararia na hora
+    }
+    p.on('error', (e) => { clearTimeout(relogio); reject(e); });
+    p.on('close', (code) => { clearTimeout(relogio); resolve({ code, out, err }); });
   });
 }
 
@@ -113,12 +124,12 @@ function falhou(o, r) {
 
 /**
  * `executor` e `definirPrioridade` são injetáveis (testes). Os ffmpeg de clipe e de miniatura
- * sobem com `cfg.clipePrioridade` (padrão 'abaixo'); `cfg.clipeCopiar !== false` usa `-c copy`.
+ * sobem com `cfg.clipePrioridade` (padrão 'abaixo') e limite `cfg.clipeTimeoutSegundos` (padrão 120; 0 = sem limite); `cfg.clipeCopiar !== false` usa `-c copy`.
  */
 export async function recortarClipe({ trechos, inicioMs, fimMs, destino, instanteMiniaturaMs, cfg, executor = executar, definirPrioridade }) {
   if (!trechos?.length) return { clipe: null, miniatura: null, soAudio: false };
   const ffmpeg = cfg.ffmpeg ?? 'ffmpeg';
-  const extra = { prioridade: cfg.clipePrioridade ?? 'abaixo', definirPrioridade };
+  const extra = { prioridade: cfg.clipePrioridade ?? 'abaixo', definirPrioridade, timeoutMs: Number(cfg.clipeTimeoutSegundos ?? 120) * 1000 };
   const soAudio = trechos.some((t) => !t.temVideo);
   const tmp = `${destino}.tmp.mp4`;
   const final = `${destino}.mp4`;
@@ -142,7 +153,7 @@ export async function recortarClipe({ trechos, inicioMs, fimMs, destino, instant
     if (r.code !== 0 || !existsSync(tmp)) throw falhou('recortar o clipe', r);
     renameSync(tmp, final);
   } catch (e) {
-    rmSync(tmp, { force: true });
+    rmSync(tmp, { force: true, maxRetries: 5, retryDelay: 100 }); // no Windows o ffmpeg morto pode segurar o arquivo um instante
     throw e instanceof Error ? e : new Error(String(e));
   } finally {
     rmSync(dirTmp, { recursive: true, force: true });

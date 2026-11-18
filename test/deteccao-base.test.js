@@ -27,7 +27,7 @@ test('configDeteccao: aplica padrões e respeita a config', () => {
 test('configDeteccao: valores inválidos dão ConfigErro em pt-BR', () => {
   const casos = [
     { somLimiarDb: 3 }, { movimentoAreaMinima: 0 }, { movimentoAreaMinima: 2 },
-    { eventoJuntarSegundos: 0 }, { clipesDias: -1 }, { clipesDias: 1e9 }, { clipesDias: 1.5 }, { movimentoLimiarPixel: 300 }, { resolucao: 'grande' },
+    { eventoJuntarSegundos: 0 }, { clipeTimeoutSegundos: -1 }, { clipeTimeoutSegundos: Infinity }, { clipeTimeoutSegundos: 1e9 }, { clipeTimeoutSegundos: 'x' }, { clipesDias: -1 }, { clipesDias: 1e9 }, { clipesDias: 1.5 }, { movimentoLimiarPixel: 300 }, { resolucao: 'grande' },
   ];
   for (const extra of casos) {
     assert.throws(() => configDeteccao({ resolucao: '1280x720', ...extra }), (e) => e instanceof ConfigErro && /inválida/.test(e.message), JSON.stringify(extra));

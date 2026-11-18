@@ -20,6 +20,7 @@ export const PADROES = {
   clipeMargemSegundos: 10,
   clipePreset: 'veryfast',
   clipeCrf: 26,
+  clipeTimeoutSegundos: 120,
   miniaturaLargura: 320,
   clipesDias: 30,
 };
@@ -29,7 +30,7 @@ const POSITIVOS = [
   'eventoJuntarSegundos', 'eventoMaxSegundos', 'miniaturaLargura',
 ];
 const NAO_NEGATIVOS = [
-  'somDuracaoMinimaMs', 'eventoPreSegundos', 'eventoPosSegundos', 'clipeMargemSegundos', 'clipeCrf', 'clipesDias',
+  'somDuracaoMinimaMs', 'eventoPreSegundos', 'eventoPosSegundos', 'clipeMargemSegundos', 'clipeCrf', 'clipeTimeoutSegundos', 'clipesDias',
 ];
 
 /** Junta os padrões da detecção com a config carregada e valida (mensagens em pt-BR). */
@@ -38,6 +39,7 @@ export function configDeteccao(cfg) {
   const erro = (m) => { throw new ConfigErro(`Configuração inválida: ${m}`); };
   for (const k of POSITIVOS) if (!(Number(c[k]) > 0)) erro(`"${k}" precisa ser um número maior que zero.`);
   for (const k of NAO_NEGATIVOS) if (!(Number(c[k]) >= 0)) erro(`"${k}" precisa ser um número maior ou igual a zero.`);
+  if (!(Number.isFinite(Number(c.clipeTimeoutSegundos)) && Number(c.clipeTimeoutSegundos) <= 86400)) erro('"clipeTimeoutSegundos" precisa ser um número de segundos, até 86400 (0 = sem limite).');
   if (!(Number.isInteger(Number(c.clipesDias)) && Number(c.clipesDias) <= 36500)) erro('"clipesDias" precisa ser um número inteiro de dias, até 36500 (0 = nunca apagar).');
   if (!(Number(c.somLimiarDb) < 0)) erro('"somLimiarDb" precisa ser negativo (dBFS, ex.: -30).');
   if (!(c.movimentoLimiarPixel >= 0 && c.movimentoLimiarPixel <= 255)) erro('"movimentoLimiarPixel" vai de 0 a 255.');

@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { acharTrechos, recortarClipe } from '../src/deteccao/clipes.js';
+import { acharTrechos, executar, recortarClipe } from '../src/deteccao/clipes.js';
 
 const temFfmpeg = spawnSync('ffmpeg', ['-version'], { windowsHide: true }).status === 0 &&
   spawnSync('ffprobe', ['-version'], { windowsHide: true }).status === 0;
@@ -230,5 +230,49 @@ test('clipe: ffmpeg de clipe e de miniatura sobem com clipePrioridade (padrão a
     const o = dubleExecutor();
     await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'b'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff', clipePrioridade: 'normal' }, executor: o.executor });
     assert.equal(o.chamadas[0].extra.prioridade, 'normal');
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+// --- tempo limite do recorte (ROCKY-7) ---
+
+test('clipe: ffmpeg que nunca termina é morto em clipeTimeoutSegundos e a fila segue', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'rocky-dub-'));
+  try {
+    const pids = [];
+    // "ffmpeg" falso: um node que nunca termina, pelo mesmo executar real (caminho do kill).
+    const travado = (cmd, args, extra) => {
+      const r = executar(process.execPath, ['-e', "console.log(process.pid);setInterval(()=>{},1000)"], { ...extra, capturarStdout: true });
+      pids.push(r);
+      return r;
+    };
+    const t0 = Date.now();
+    await assert.rejects(
+      recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'a'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff', clipeTimeoutSegundos: 0.3 }, executor: travado }),
+      /tempo limite/,
+    );
+    assert.ok(Date.now() - t0 < 5000);
+    assert.deepEqual(readdirSync(d), []); // nada sobra
+    // o próximo recorte (executor normal) sai
+    const { executor } = dubleExecutor();
+    const r = await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'b'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff' }, executor });
+    assert.ok(r.clipe);
+  } finally { rmSync(d, { recursive: true, force: true }); }
+});
+
+test('executar: timeoutMs mata o processo; sem timeoutMs não há limite', async () => {
+  await assert.rejects(executar(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { timeoutMs: 200 }), /tempo limite/);
+  const r = await executar(process.execPath, ['-e', 'process.exit(0)'], { timeoutMs: 0 });
+  assert.equal(r.code, 0);
+});
+
+test('clipe: o executor recebe timeoutMs (padrão 120 s; 0 = sem limite)', async () => {
+  const d = mkdtempSync(join(tmpdir(), 'rocky-dub-'));
+  try {
+    const a = dubleExecutor();
+    await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'a'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff' }, executor: a.executor });
+    assert.deepEqual(a.chamadas.map((c) => c.extra.timeoutMs), [120000, 120000]);
+    const b = dubleExecutor();
+    await recortarClipe({ trechos: TR, inicioMs: 5000, fimMs: 9000, destino: join(d, 'b'), instanteMiniaturaMs: 6000, cfg: { ffmpeg: 'ff', clipeTimeoutSegundos: 0 }, executor: b.executor });
+    assert.equal(b.chamadas[0].extra.timeoutMs, 0);
   } finally { rmSync(d, { recursive: true, force: true }); }
 });

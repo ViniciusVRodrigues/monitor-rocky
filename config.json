@@ -64,6 +64,7 @@
   "clipeMargemSegundos": 10,
   "clipePreset": "veryfast",
   "clipeCrf": 26,
+  "clipeTimeoutSegundos": 120,
   "clipeCopiar": true,
   "clipePrioridade": "abaixo",
   "miniaturaLargura": 320,
