@@ -50,11 +50,11 @@ export function executar(cmd, args, { capturarStdout = false, prioridade = null,
   });
 }
 
-async function sondar(arquivo, ffprobe) {
+async function sondar(arquivo, ffprobe, { executor = executar, timeoutMs = 0, log } = {}) {
   try {
-    const r = await executar(ffprobe, [
+    const r = await executor(ffprobe, [
       '-v', 'error', '-show_entries', 'format=duration:stream=codec_type', '-of', 'json', arquivo,
-    ], { capturarStdout: true });
+    ], { capturarStdout: true, timeoutMs });
     if (r.code !== 0) return null;
     const j = JSON.parse(r.out);
     const d = Number(j.format?.duration);
@@ -62,11 +62,40 @@ async function sondar(arquivo, ffprobe) {
       duracaoS: Number.isFinite(d) && d > 0 ? d : null,
       temVideo: (j.streams ?? []).some((s) => s.codec_type === 'video'),
     };
-  } catch { return null; }
+  } catch (e) {
+    // Estouro do tempo limite (ffprobe morto) ou falha ao subir: o trecho é ignorado e o clipe segue sem ele.
+    if (log) log(`Sondagem de ${arquivo} falhou: ${e?.message ?? e}`);
+    return null;
+  }
 }
 
-/** Trechos que cruzam [inicioMs, fimMs], ordenados. */
-export async function acharTrechos({ pasta, inicioMs, fimMs, ffprobe = 'ffprobe' }) {
+/** Roda `tarefas` (funções que devolvem promessa) com no máximo `limite` ao mesmo tempo, mantendo a ordem dos resultados. */
+async function comLimite(tarefas, limite) {
+  const resultados = new Array(tarefas.length);
+  let proximo = 0;
+  const operario = async () => {
+    while (proximo < tarefas.length) {
+      const i = proximo++;
+      resultados[i] = await tarefas[i]();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limite, tarefas.length)) }, operario));
+  return resultados;
+}
+
+/** Folga sobre `trechoSegundos`: o ffmpeg corta no keyframe seguinte, então o trecho pode passar um pouco do nominal. */
+const FOLGA_TRECHO_MS = 10000;
+
+/**
+ * Trechos que cruzam [inicioMs, fimMs], ordenados. Só sonda (ffprobe) os que podem cobrir a janela
+ * (início + `trechoSegundos` < início da janela, ou início > fim, são descartados antes), no máximo
+ * `sondagensSimultaneas` por vez e cada uma com `sondagemTimeoutMs` (0 = sem limite): no Windows cada
+ * spawn bloqueia o event loop, e 240 de uma vez o deixavam parado ~15 s (ROCKY-12).
+ */
+export async function acharTrechos({
+  pasta, inicioMs, fimMs, ffprobe = 'ffprobe', trechoSegundos = 60, sondagensSimultaneas = 3,
+  sondagemTimeoutMs = 0, executor = executar, log,
+}) {
   const dias = new Set();
   for (const ms of [inicioMs - 86400000, inicioMs, fimMs]) dias.add(nomeDia(new Date(ms)));
   const achados = [];
@@ -79,11 +108,15 @@ export async function acharTrechos({ pasta, inicioMs, fimMs, ffprobe = 'ffprobe'
       if (!mt) continue;
       const ini = new Date(+md[1], +md[2] - 1, +md[3], +mt[1], +mt[2], +mt[3]).getTime();
       if (ini > fimMs) continue;
+      if (ini + trechoSegundos * 1000 + FOLGA_TRECHO_MS < inicioMs) continue;
       achados.push({ arquivo: join(pasta, 'trechos', dia, nome), inicioMs: ini });
     }
   }
   achados.sort((a, b) => a.inicioMs - b.inicioMs);
-  const sondas = await Promise.all(achados.map((t) => sondar(t.arquivo, ffprobe)));
+  const sondas = await comLimite(
+    achados.map((t) => () => sondar(t.arquivo, ffprobe, { executor, timeoutMs: sondagemTimeoutMs, log })),
+    sondagensSimultaneas,
+  );
   const saida = [];
   achados.forEach((t, i) => {
     const s = sondas[i];

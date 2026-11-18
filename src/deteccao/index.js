@@ -58,7 +58,10 @@ export async function iniciarDeteccao(cfgBase, { log = console.log, deps = {} } 
     let clipe = null;
     let miniatura = null;
     try {
-      const trechos = await achar({ pasta: cfg.pasta, inicioMs, fimMs, ffprobe: cfg.ffprobe });
+      const trechos = await achar({
+        pasta: cfg.pasta, inicioMs, fimMs, ffprobe: cfg.ffprobe, trechoSegundos: cfg.trechoSegundos,
+        sondagensSimultaneas: cfg.clipeSondagensSimultaneas, sondagemTimeoutMs: cfg.clipeSondagemTimeoutSegundos * 1000, log,
+      });
       const r = await recortar({
         trechos, inicioMs, fimMs, destino: c.base,
         instanteMiniaturaMs: evento.picoMs ?? evento.inicio, cfg,

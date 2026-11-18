@@ -129,6 +129,8 @@ Para calibrar: se aparecerem eventos de som demais, suba `somLimiarDb` (ex.: -25
 | `clipeCopiar` | `true` | recorta o clipe sem recodificar (corte no quadro-chave, a cada `aovivoSegundos`); `false` recodifica com `clipePreset`/`clipeCrf` para cortar certinho, gastando CPU a cada evento |
 | `clipePreset`, `clipeCrf` | `veryfast`, 26 | qualidade do clipe quando `clipeCopiar` é `false` |
 | `clipeTimeoutSegundos` | `120` | tempo máximo de cada ffmpeg do recorte (clipe e miniatura); ao estourar, ele é encerrado, a falha vai ao log (o evento fica registrado sem clipe) e a fila de clipes segue. `0` = sem limite; máximo 86400 |
+| `clipeSondagensSimultaneas` | `3` | quantas sondagens do ffprobe rodam ao mesmo tempo ao achar os trechos de um clipe (1 a 16); no Windows cada spawn bloqueia o event loop, então poucas por vez evitam travar a página |
+| `clipeSondagemTimeoutSegundos` | `15` | tempo máximo de cada sondagem do ffprobe; ao estourar, ele é encerrado, o trecho é ignorado e a falha vai ao log. `0` = sem limite; máximo 3600 |
 | `clipePrioridade` | `abaixo` | prioridade do ffmpeg que recorta clipes e miniaturas (mesmos valores de `ffmpegPrioridade`), para não disputar CPU com a captura |
 | `miniaturaLargura` | 320 | largura da miniatura |
 | `clipesDias` | 30 | por quantos dias guardar clipes e registros (inteiro até 36500; `0` = sempre) |
