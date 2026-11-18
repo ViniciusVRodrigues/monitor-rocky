@@ -246,7 +246,7 @@ ul { list-style: none; }
      menor entre a que sobra acima dos controles e a que a largura da coluna permite (16:9). */
   .pagina {
     --col-dia: clamp(320px, 24vw, 440px);
-    --altura-video: min(calc(100cqh - var(--altura-controles, 56px) - var(--esp-3)), calc((100cqw - var(--col-dia) - var(--esp-5)) * 9 / 16));
+    --altura-video: min(calc(100cqh - var(--altura-controles, 56px) - 2 * var(--esp-3)), calc((100cqw - var(--col-dia) - var(--esp-5)) * 9 / 16));
     flex: 1; min-height: 0; width: 100%; padding: var(--esp-3) var(--esp-5); container-type: size;
     grid-template-columns: minmax(0, 1fr) var(--col-dia); grid-template-rows: auto auto minmax(0, 1fr);
     gap: var(--esp-3) var(--esp-5); align-content: stretch;

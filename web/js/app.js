@@ -234,7 +234,12 @@ async function principal() {
   abrirAoVivo({
     aoConexao,
     aoEstado: (d) => aplicarEstado(d.estado, d.ouvindoPC, d.reiniciando, false),
-    aoEvento: (ev) => { dia.novoEvento(ev); recolher.eventoNovo(); },
+    aoEvento: (ev) => {
+      dia.novoEvento(ev);
+      recolher.eventoNovo();
+      // Recolhida, a pílula (aria-live) está escondida: o anúncio geral avisa quem usa leitor de tela.
+      if (recolher.recolhida) anunciar('Evento novo na linha do tempo');
+    },
     aoNivel: (n) => {
       ultimoNivel = Date.now();
       nivelValor = Math.min(1, Math.max(0, n));
