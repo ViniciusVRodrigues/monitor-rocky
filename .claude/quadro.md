@@ -4,12 +4,13 @@
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram); ver detector de latido com YAMNet (referência: detector de áudio do Frigate) | Opus | ROCKY-2, ROCKY-4 |
-| ROCKY-9 | Retenção dos clipes também por espaço em disco (change `retencao-por-espaco`, issue #27; próximo da fila; cartão proposto em 2026-11-18) | Sonnet | — |
+| ROCKY-16 | Teste de clipes com ffmpeg real estoura o tempo quando várias suítes rodam juntas (visto no ROCKY-9; passa isolado) | Sonnet | — |
 
 ## Fazendo
 - **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Em 2026-11-18: Tailscale instalado no PC (máquina "rocky", Serve ligado, Funnel desligado), página abre pelo endereço da tailnet com login exigido; sem convidado por enquanto. Falta só a 4.1: a pessoa abrir pelo celular fora de casa (ao vivo, som, atraso). Não arquivar a change antes.
 
 ## Feito
+- **ROCKY-9: retenção dos clipes por espaço em disco** (2026-11-18) — PR #31, issue #27 fechada, change arquivada (spec `deteccao`), 285 testes. `limparPorEspaco`: `clipesMaxGb` e `discoLivreMinGb` (0 = desligadas) apagam os dias de clipes mais antigos; poupa hoje, `guardados/` e trechos. Vale no próximo reinício; nada muda até a pessoa ligar as chaves.
 - **ROCKY-8: validação estrita dos números da config** (2026-11-18) — PR #30, issue #26 fechada, change arquivada (spec `captura`), 279 testes. `src/validar.js` (`exigirNumero`) em `src/config.js` e `src/deteccao/config.js`: recusa `true`, `[5]`, `"5"`, `null`, `NaN`, `Infinity`, com a chave e o valor na mensagem. Vale no monitor real no próximo reinício.
 - **ROCKY-15: clipes sem travar o event loop** (2026-11-18) — PR #29, issue #25 fechada, change arquivada (spec `deteccao`), 274 testes. `acharTrechos` descarta trechos fora da janela antes do ffprobe, `clipeSondagensSimultaneas` 3, `clipeSondagemTimeoutSegundos` 15. Medido (160 trechos): busca de 5-6,5 s para 0,2 s. Chaves do Tailscale no `config.json`. Vale no monitor real no próximo reinício.
 - **ROCKY-13: ajustes da página** (2026-11-18) — PR #28, issue #21 fechada, change arquivada (spec `pagina`), 272 testes. Um só aviso de som (botão "Toque para ouvir o Rocky"); `recuperou` zera e chama `play()` depois de recuperar (hls.js 1.7.4); zoom 200% e modo gravação; opção C da pessoa: linha do tempo recolhível num trilho, lembrada pelo aparelho (1920×1080 recolhida: vídeo 1671×940). Falta: recolher uma vez no ARZOPA; validar no navegador real o primeiro toque do som e a recuperação do HLS.
