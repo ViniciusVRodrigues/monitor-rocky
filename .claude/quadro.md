@@ -5,15 +5,15 @@
 |---|---|---|---|
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram); ver detector de latido com YAMNet (referência: detector de áudio do Frigate) | Opus | ROCKY-2, ROCKY-4 |
 | ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
-| ROCKY-15 | Pôr no `config.json` as chaves do ROCKY-4 (`tailscaleLoginsPermitidos`, `tailscaleExe`, `tailscaleHttpsPorta`), hoje só com padrão no código; e tempo limite no `sondar` (ffprobe) dos clipes | Sonnet | — |
+| ROCKY-15 | Picos do event loop: `acharTrechos` em `src/deteccao/clipes.js` sonda com ffprobe todos os trechos de 3 dias em `Promise.all` (240 spawns = loop parado ~15 s): descartar trechos fora da janela antes de sondar, limitar a concorrência a 2-4 e pôr tempo limite no `sondar`. Junto: pôr no `config.json` as chaves do ROCKY-4 (`tailscaleLoginsPermitidos`, `tailscaleExe`, `tailscaleHttpsPorta`) | Sonnet | — |
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
 - **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Falta (pessoa): instalar o Tailscale, ligar MagicDNS e HTTPS, pôr o host .ts.net em `hostsPermitidos`, abrir pelo celular (4.1) e conferir que nada está público (4.2). Perguntas do convidado e dos e-mails com a pessoa. Não arquivar a change antes.
-- **ROCKY-12: estabilidade fina** (Sonnet) — change `estabilidade-fina`, issue #20, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: tarefa, prioridade, vigia, supervisor, servico, ffmpeg-args, harness de testes. O `recuperou` do hls.js passou ao ROCKY-13.
 - **ROCKY-13: ajustes da página** (Opus) — change `ajustes-pagina`, issue #21, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: só web/ e testes web.
 
 ## Feito
+- **ROCKY-12: estabilidade fina** (2026-11-18) — PR #24, issue #20 fechada, change arquivada (spec `rodar-sozinho`), 257 testes. O vigia aplica `tarefaPrioridade` a si e ao monitor (o Agendador só dava ao wscript); o VBS espera o vigia e o vigia sai quando o pai some; `remover-servico` acha vigia, monitor e ffmpeg pela linha de comando; aviso de rename do HLS silenciado com contagem (leitor ou antivírus segurando o playlist); `--test-force-exit`. Falta: `npm run instalar-servico` na tarefa real (reinicia o monitor), quando a pessoa quiser. Picos do event loop: causa em `src/deteccao/clipes.js` `acharTrechos`, foi para o ROCKY-15.
 - **ROCKY-7: timeout no recorte de clipe** (2026-11-18) — PR #23, issue #19 fechada, change arquivada (spec `deteccao`), 252 testes. `clipeTimeoutSegundos` (120; 0 = sem limite) mata o ffmpeg do recorte e da miniatura e a fila segue. Teste intermitente era `test/deteccao-pipe.test.js:28` (espera fixa de 50 ms): corrigido esperando a condição, 32 rodadas sob carga verdes.
 - **ROCKY-14: apagar e guardar gravações** (2026-11-17) — PR #16 e #17, issue #15 fechada, 231 testes. Apagar a hora (clipes, eventos e trechos, menos o trecho gravando; confirmação com a contagem) e um a um; "Guardar" em `gravacoes/guardados/` (fora da limpeza); abas [Linha do tempo | Guardados]; botões sempre à vista (ao lado a 768 px). Escolhas da pessoa: opção 1, A e A, manter 768. Falta: conferir no monitor real (tarefa 4.2, monitor parado por escolha da pessoa) e arquivar a change.
 - **ROCKY-11: ao vivo estável, som e responsivo** (2026-11-17) — PR #14, issue #13 fechada, 208 testes. Causa: falta de CPU (tarefa em prioridade abaixo do normal, PC carregado) e saídas que seguravam o ffmpeg. `tarefaPrioridade` acima do normal, clipes em `-c copy`, hls.js antes do HLS nativo do Chrome 156, layout responsivo (vídeo fixo no celular, barra de som sobre a base do vídeo). Teste de 31 min na câmera real sem quadro perdido. 720p veryfast; `fpsCamera` 30 (a câmera não abre 720p a 15). Tarefa reinstalada. Som confirmado claro pela pessoa (2026-11-17).
@@ -38,5 +38,6 @@
 - Manter o app próprio (2026-11-18): pesquisa de alternativas (Agent DVR, Frigate, Viseron, motionEye, Scrypted) não achou nenhuma que libere a câmera mantendo o som, junte 4 h contínuas com clipes de som e rode nativo no Windows com webcam USB sem nuvem paga.
 
 ## Em aberto
+- Reinstalar a tarefa (`npm run instalar-servico`, reinicia o monitor) para valer o ROCKY-12; dá para fazer junto do passo do Tailscale (ROCKY-4).
 - Quais e-mails Google podem ver (além do da pessoa).
 - Por quanto tempo guardar os clipes de evento (padrão provisório: 30 dias, configurável).
