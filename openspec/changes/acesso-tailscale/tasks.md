@@ -11,4 +11,4 @@
 
 ## 4. Entrega
 - [ ] 4.1 Página aberta pelo celular fora da rede de casa, com ao vivo e som; anotar o atraso e conferir os cabeçalhos reais (Host da tailnet e `X-Forwarded-For`) e o formato do `tailscale serve status --json` (`AllowFunnel`).
-- [ ] 4.2 Conferido que nada está público (sem Funnel, nenhuma porta aberta).
+- [x] 4.2 Conferido que nada está público (sem Funnel, nenhuma porta aberta). Feito em 2026-11-18: `tailscale funnel status` mostra "tailnet only"; servidor só em 127.0.0.1; pedido com Host da tailnet sem identidade dá 403.

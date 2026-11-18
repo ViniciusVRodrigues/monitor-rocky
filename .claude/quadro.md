@@ -9,7 +9,7 @@
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (change `retencao-por-espaco`, issue #27; 3º da fila, depois do 8) | Sonnet | — |
 
 ## Fazendo
-- **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Falta (pessoa): instalar o Tailscale, ligar MagicDNS e HTTPS, pôr o host .ts.net em `hostsPermitidos`, abrir pelo celular (4.1) e conferir que nada está público (4.2). Perguntas do convidado e dos e-mails com a pessoa. Não arquivar a change antes.
+- **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Em 2026-11-18: Tailscale instalado no PC (máquina "rocky", Serve ligado, Funnel desligado), página abre pelo endereço da tailnet com login exigido; sem convidado por enquanto. Falta só a 4.1: a pessoa abrir pelo celular fora de casa (ao vivo, som, atraso). Não arquivar a change antes.
 - **ROCKY-13: ajustes da página** (Opus) — change `ajustes-pagina`, issue #21, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: só web/ e testes web.
 
 ## Feito
@@ -38,6 +38,4 @@
 - Manter o app próprio (2026-11-18): pesquisa de alternativas (Agent DVR, Frigate, Viseron, motionEye, Scrypted) não achou nenhuma que libere a câmera mantendo o som, junte 4 h contínuas com clipes de som e rode nativo no Windows com webcam USB sem nuvem paga.
 
 ## Em aberto
-- Reinstalar a tarefa (`npm run instalar-servico`, reinicia o monitor) para valer o ROCKY-12: decisão da pessoa (2026-11-18) é fazer junto do passo do Tailscale (ROCKY-4), um reinício só. Até lá, não mexer no monitor real.
-- Quais e-mails Google podem ver (além do da pessoa).
 - Por quanto tempo guardar os clipes de evento (padrão provisório: 30 dias, configurável).
