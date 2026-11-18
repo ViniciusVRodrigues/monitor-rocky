@@ -1,4 +1,5 @@
 import { ConfigErro } from '../config.js';
+import { exigirNumero } from '../validar.js';
 
 /** Padrões das chaves da detecção (documentadas no README). */
 export const PADROES = {
@@ -40,15 +41,15 @@ const NAO_NEGATIVOS = [
 export function configDeteccao(cfg) {
   const c = { ...PADROES, ...cfg };
   const erro = (m) => { throw new ConfigErro(`Configuração inválida: ${m}`); };
-  for (const k of POSITIVOS) if (!(Number(c[k]) > 0)) erro(`"${k}" precisa ser um número maior que zero.`);
-  for (const k of NAO_NEGATIVOS) if (!(Number(c[k]) >= 0)) erro(`"${k}" precisa ser um número maior ou igual a zero.`);
-  if (!(Number.isFinite(Number(c.clipeTimeoutSegundos)) && Number(c.clipeTimeoutSegundos) <= 86400)) erro('"clipeTimeoutSegundos" precisa ser um número de segundos, até 86400 (0 = sem limite).');
-  if (!(Number.isInteger(Number(c.clipeSondagensSimultaneas)) && Number(c.clipeSondagensSimultaneas) <= 16)) erro('"clipeSondagensSimultaneas" precisa ser um número inteiro de 1 a 16.');
-  if (!(Number(c.clipeSondagemTimeoutSegundos) <= 3600)) erro('"clipeSondagemTimeoutSegundos" precisa ser um número de segundos, até 3600 (0 = sem limite).');
-  if (!(Number.isInteger(Number(c.clipesDias)) && Number(c.clipesDias) <= 36500)) erro('"clipesDias" precisa ser um número inteiro de dias, até 36500 (0 = nunca apagar).');
-  if (!(Number(c.somLimiarDb) < 0)) erro('"somLimiarDb" precisa ser negativo (dBFS, ex.: -30).');
-  if (!(c.movimentoLimiarPixel >= 0 && c.movimentoLimiarPixel <= 255)) erro('"movimentoLimiarPixel" vai de 0 a 255.');
-  if (!(c.movimentoAreaMinima > 0 && c.movimentoAreaMinima <= 1)) erro('"movimentoAreaMinima" é uma fração entre 0 e 1.');
+  for (const k of POSITIVOS) exigirNumero(k, c[k], { minExclusivo: 0 });
+  for (const k of NAO_NEGATIVOS) exigirNumero(k, c[k], { min: 0 });
+  exigirNumero('clipeTimeoutSegundos', c.clipeTimeoutSegundos, { min: 0, max: 86400, descricao: 'um número de segundos, até 86400 (0 = sem limite)' });
+  exigirNumero('clipeSondagensSimultaneas', c.clipeSondagensSimultaneas, { inteiro: true, min: 1, max: 16, descricao: 'um número inteiro de 1 a 16' });
+  exigirNumero('clipeSondagemTimeoutSegundos', c.clipeSondagemTimeoutSegundos, { min: 0, max: 3600, descricao: 'um número de segundos, até 3600 (0 = sem limite)' });
+  exigirNumero('clipesDias', c.clipesDias, { inteiro: true, min: 0, max: 36500, descricao: 'um número inteiro de dias, até 36500 (0 = nunca apagar)' });
+  exigirNumero('somLimiarDb', c.somLimiarDb, { maxExclusivo: 0, descricao: 'negativo (dBFS, ex.: -30)' });
+  exigirNumero('movimentoLimiarPixel', c.movimentoLimiarPixel, { min: 0, max: 255, descricao: 'um número de 0 a 255' });
+  exigirNumero('movimentoAreaMinima', c.movimentoAreaMinima, { minExclusivo: 0, max: 1, descricao: 'uma fração entre 0 e 1' });
   if (!String(c.movimentoCanal ?? '').trim()) erro('"movimentoCanal" não pode ficar vazio.');
   if (!/^\d+x\d+$/.test(String(c.resolucao ?? ''))) erro('"resolucao" precisa ser LARGURAxALTURA (ex.: 1280x720).');
   return c;
