@@ -1,13 +1,13 @@
 // Orquestra a página: configuração, estado (SSE), player, som, controles e linha do tempo.
 import { pegarConfig, enviarControle, abrirAoVivo } from './api.js';
 import { criarPlayer } from './aovivo.js';
-import { criarOuvir, decidirSomAoAbrir } from './ouvir.js';
+import { criarOuvir, decidirSomAoAbrir, telaSom } from './ouvir.js';
 import { criarControles } from './controles.js';
 import { criarDia } from './dia.js';
 
 const $ = (id) => document.getElementById(id);
 
-// O vídeo fixo no celular fica logo abaixo do topo, que muda de altura (botão "Ativar som" no topo).
+// O vídeo fixo no celular e o scroll até o player ficam logo abaixo do topo (o topo pode quebrar em 2 linhas).
 const topo = document.querySelector('.topo');
 if (topo) {
   const medirTopo = () => document.documentElement.style.setProperty('--altura-topo', `${topo.offsetHeight}px`);
@@ -131,21 +131,19 @@ async function principal() {
   // ---------- som ----------
   const btnOuvir = $('btn-ouvir');
   const mini = $('ouvir-mini');
-  const toque = $('toque-ouvir');
   let ligouPorGesto = 0;
   let somEst = 'desligado';
   let somTexto = btnOuvir.querySelector('.rotulo').textContent;
   // Em "parado" não há o que ouvir: o botão fica desativado com o motivo, em vez de "Conectando…".
   function pintarSom() {
-    const parado = estado === 'parado';
-    for (const b of [btnOuvir, mini]) {
-      b.querySelector('.rotulo').textContent = parado ? 'Sem som · nada gravando' : somTexto;
-      b.disabled = parado;
-      b.classList.toggle('ocupado', !parado && somEst === 'conectando');
-      b.classList.toggle('com-erro', !parado && (somEst === 'erro' || somEst === 'falhou'));
-      b.classList.toggle('silenciado', parado || somEst === 'desligado' || somEst === 'bloqueado');
+    const t = telaSom({ parado: estado === 'parado', estado: somEst, texto: somTexto });
+    for (const [b, p] of [[btnOuvir, t.grande], [mini, t.mini]]) {
+      b.querySelector('.rotulo').textContent = p.rotulo;
+      b.disabled = p.desativado;
+      b.classList.toggle('ocupado', p.ocupado);
+      b.classList.toggle('com-erro', p.comErro);
+      b.classList.toggle('silenciado', p.silenciado);
     }
-    toque.hidden = parado || somEst !== 'bloqueado';
   }
   const ouvir = criarOuvir({
     cfg,
@@ -168,7 +166,6 @@ async function principal() {
   }
   btnOuvir.addEventListener('click', aoClicarSom);
   mini.addEventListener('click', aoClicarSom);
-  toque.addEventListener('click', () => { if (Date.now() - ligouPorGesto >= 600 && ouvir.estado === 'bloqueado') { somPausadoPorGravacao = false; ouvir.ligar(); } });
 
   const liberar = () => {
     if (ouvir.estado !== 'bloqueado') return;

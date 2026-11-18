@@ -48,26 +48,35 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
     mostrarTela('Conectando ao ao vivo…');
     video.hidden = false;
     const url = `/aovivo/index.m3u8?t=${Date.now()}`;
+    // Uma recuperação de mídia por vez: zera quando o vídeo volta a tocar (senão só valeria a primeira).
+    let recuperou = false;
     const aoTocar = () => {
+      recuperou = false;
       if (modo !== 'vivo') return;
       clearTimeout(timerConectar);
       esconderTela();
       selo.hidden = false;
     };
     // Sem isto, um HLS que nunca toca nem dá erro deixaria "Conectando…" para sempre.
-    timerConectar = setTimeout(() => { if (modo === 'vivo' && estado === 'gravando') erroVivo(); }, conectarMs);
+    const vigiarConexao = () => {
+      clearTimeout(timerConectar);
+      timerConectar = setTimeout(() => { if (modo === 'vivo' && estado === 'gravando') erroVivo(); }, conectarMs);
+    };
+    vigiarConexao();
     video.onplaying = aoTocar;
     video.onerror = erroVivo;
     const Hls = globalThis.Hls;
     // hls.js primeiro (o Chrome diz "maybe" ao HLS nativo, mas trava em ~6 s); nativo só sem MSE (iOS).
     if (Hls?.isSupported()) {
-      let recuperou = false;
       hls = new Hls({ liveSyncDurationCount: 3, lowLatencyMode: false });
       hls.on(Hls.Events.ERROR, (_e, d) => {
         if (!d.fatal) return;
         if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !recuperou) {
           recuperou = true;
+          // O hls.js refaz o attach com media.load(), que deixa o vídeo pausado, e não chama play().
           hls.recoverMediaError();
+          video.play().catch(() => {});
+          vigiarConexao();
           return;
         }
         erroVivo();
@@ -122,6 +131,7 @@ export function criarPlayer({ video, tela, telaTexto, telaBotao, medidor, selo, 
       const pintarFaixa = () => {
         const n = gravacao.urls.length;
         faixaTexto.textContent = `${prefixo} · ${rotulo}${soAudio ? ' · só som' : ''}${n > 1 ? ` · ${gravacao.i + 1} de ${n}` : ''}`;
+        faixaTexto.title = faixaTexto.textContent; // a faixa corta em 2 linhas
       };
       pintarFaixa();
       video.hidden = false;

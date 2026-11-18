@@ -98,6 +98,7 @@ ul { list-style: none; }
 .player:has(#tela:not([hidden])) .nivel { display: none; }
 @media (max-width: 1023.98px) {
   .conexao[data-ok="sim"] { display: none; }
+  .topo { min-height: 57px; } /* a altura do mini (48) + respiro: o topo não pula quando ele aparece */
 }
 .faixa-offline, .faixa-voltou { padding: var(--esp-3) var(--esp-4); font-weight: 600; }
 .faixa-offline { background: var(--erro); color: #fff; }
@@ -108,16 +109,20 @@ ul { list-style: none; }
 /* ---------- página ---------- */
 .pagina { display: grid; gap: var(--esp-3); padding: var(--esp-2) var(--esp-4) var(--esp-6); }
 .ao-vivo, .controles, .dia { min-width: 0; }
-.player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; color: #fff; border-radius: 12px; overflow: hidden; }
+.player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; color: #fff; border-radius: 12px; overflow: hidden; scroll-margin-top: calc(var(--altura-topo, 48px) + var(--esp-2)); }
 .video { display: block; width: 100%; height: 100%; background: #000; object-fit: contain; }
 .selo { position: absolute; z-index: 1; left: var(--esp-3); bottom: 32px; padding: 2px var(--esp-2); border-radius: 4px; background: rgba(0,0,0,.7); font-size: 14px; font-weight: 700; }
-.faixa-gravacao { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--esp-2); padding: var(--esp-1) var(--esp-3); background: rgba(0,0,0,.8); font-weight: 600; font-size: 14px; }
+.faixa-gravacao { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: var(--esp-2); padding: var(--esp-1) var(--esp-3); background: rgba(0,0,0,.8); font-weight: 600; font-size: 14px; }
+/* Texto longo da gravação: até 2 linhas, a faixa não cresce (o texto inteiro fica no title). */
+#faixa-gravacao-texto { flex: 1 1 0; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.faixa-gravacao .botao { flex: none; }
 .tela { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--esp-3); padding: var(--esp-3); text-align: center; background: #000; pointer-events: none; }
 .tela .botao { pointer-events: auto; }
+/* Gravação só de som: a tela não pode esconder os controles nativos do vídeo (o vídeo já é preto). */
+.player:has(#faixa-gravacao:not([hidden])) .tela { background: transparent; }
 .player .botao:focus-visible { outline: 3px solid #fff; outline-offset: -6px; }
 .player .botao-claro:focus-visible { outline-color: #000; }
 .tela-texto { font-size: 16px; max-width: 32ch; }
-.toque-ouvir { position: absolute; z-index: 4; inset: 0; margin: auto; width: min(80%, 320px); height: 64px; min-height: 64px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.65); }
 .medidor { display: flex; align-items: flex-end; gap: 4px; height: 32px; }
 .medidor i { display: block; width: 6px; height: 100%; background: var(--ok); border-radius: 2px; transform-origin: bottom; animation: medidor 1s ease-in-out infinite; }
 .medidor i:nth-child(2) { animation-delay: .2s; } .medidor i:nth-child(3) { animation-delay: .4s; }
@@ -212,6 +217,11 @@ ul { list-style: none; }
 @media (max-width: 599.98px) {
   .ao-vivo { margin-inline: calc(-1 * var(--esp-4)); }
   .player { border-radius: 0; }
+  /* Celular: a faixa da gravação fica colada em cima do vídeo, sem cobri-lo. */
+  .player:has(#faixa-gravacao:not([hidden])) { aspect-ratio: auto; display: flex; flex-direction: column; }
+  .player:has(#faixa-gravacao:not([hidden])) .faixa-gravacao { position: relative; flex: none; min-height: 56px; }
+  .player:has(#faixa-gravacao:not([hidden])) .video { aspect-ratio: 16 / 9; height: auto; }
+  .player:has(#faixa-gravacao:not([hidden])) .tela { top: 56px; }
 }
 /* Celular em retrato alto: o vídeo fica fixo sob o topo e a linha do tempo rola por baixo. */
 @media (max-width: 599.98px) and (min-height: 700px) and (orientation: portrait) {
@@ -222,9 +232,9 @@ ul { list-style: none; }
   .grade-controles { display: contents; }
   .confirma, .aviso-offline, .aviso-erro { grid-column: 1 / -1; }
 }
-/* Celular deitado: o vídeo cabe na altura. */
-@media (max-width: 1023.98px) and (orientation: landscape) and (max-height: 500px) {
-  .player { width: min(100%, calc((100dvh - 60px) * 16 / 9)); margin-inline: auto; }
+/* Tela deitada abaixo de 1024 (celular deitado, zoom 200%): o vídeo cabe na altura, abaixo do topo. */
+@media (max-width: 1023.98px) and (orientation: landscape) {
+  .player { width: min(100%, calc((100dvh - var(--altura-topo, 48px) - var(--esp-4)) * 16 / 9)); margin-inline: auto; }
 }
 @media (min-width: 1024px) {
   body { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
