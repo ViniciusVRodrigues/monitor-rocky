@@ -4,7 +4,7 @@ import { criarDetectorMovimento, tamanhoAnalise } from './movimento.js';
 import { criarAgregador } from './agregador.js';
 import { abrirPipeQuadros } from './pipe.js';
 import { acharTrechos, recortarClipe } from './clipes.js';
-import { caminhosEvento, montarRegistro, anexarRegistro, limparClipes } from './registro.js';
+import { caminhosEvento, montarRegistro, anexarRegistro, limparClipes, limparPorEspaco } from './registro.js';
 
 const pausar = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -119,6 +119,8 @@ export async function iniciarDeteccao(cfgBase, { log = console.log, deps = {} } 
   const limpar = () => {
     try { limparClipes({ pasta: cfg.pasta, dias: cfg.clipesDias, log }); }
     catch (e) { log(`Limpeza de clipes falhou: ${e.message}`); }
+    try { limparPorEspaco({ pasta: cfg.pasta, maxGb: cfg.clipesMaxGb, livreMinGb: cfg.discoLivreMinGb, log }); }
+    catch (e) { log(`Limpeza por espaço falhou: ${e.message}`); }
   };
   limpar();
   const timerLimpeza = setInterval(limpar, (Number(cfg.limpezaMinutos) || 5) * 60 * 1000);

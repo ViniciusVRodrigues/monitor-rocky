@@ -2,7 +2,7 @@
  * Caminhos, linha do registro (jsonl) e retenção dos clipes de eventos.
  * Contrato em openspec/changes/deteccao-eventos/design.md.
  */
-import { appendFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, statfsSync } from 'node:fs';
 import { join } from 'node:path';
 import { isoLocal, nomeDia, nomeHora } from './tempo.js';
 
@@ -80,4 +80,74 @@ export function limparClipes({ pasta, dias, agora = new Date(), log = () => {} }
   }
   if (apagados) log(`Limpeza: ${apagados} item(ns) de clipes/eventos além de ${dias} dia(s) apagado(s).`);
   return { apagados };
+}
+
+const GB = 1024 ** 3;
+
+/** Bytes de uma pasta, somando os arquivos de dentro (recursivo). Erro de leitura conta 0. */
+function tamanhoPasta(dir) {
+  let total = 0;
+  let itens = [];
+  try { itens = readdirSync(dir, { withFileTypes: true }); } catch { return 0; }
+  for (const e of itens) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) total += tamanhoPasta(p);
+    else { try { total += statSync(p).size; } catch { /* sumiu */ } }
+  }
+  return total;
+}
+
+/**
+ * Retenção por espaço: apaga os dias de clipes mais antigos (pasta e .jsonl) enquanto
+ * clipes/ passar de maxGb ou o disco tiver menos de livreMinGb livres. 0 = regra desligada.
+ * Nunca toca no dia de hoje, em guardados/ nem em trechos/.
+ * tamanhoDia(dir) e livreBytes() são injetáveis (testes).
+ */
+export function limparPorEspaco({
+  pasta, maxGb = 0, livreMinGb = 0, agora = new Date(), log = () => {},
+  tamanhoDia = tamanhoPasta, livreBytes = () => { const s = statfsSync(pasta); return Number(s.bavail) * Number(s.bsize); },
+}) {
+  const nada = { dias: [], gbLiberados: 0 };
+  const limite = Number(maxGb) > 0 ? Number(maxGb) * GB : 0;
+  const minimo = Number(livreMinGb) > 0 ? Number(livreMinGb) * GB : 0;
+  if (!limite && !minimo) return nada;
+
+  const hoje = nomeDia(agora);
+  const dias = new Set();
+  try { for (const e of readdirSync(join(pasta, 'clipes'), { withFileTypes: true })) if (e.isDirectory() && RE_DIA.test(e.name)) dias.add(e.name); } catch { /* sem clipes */ }
+  try { for (const n of readdirSync(join(pasta, 'eventos'))) { const m = n.match(RE_JSONL); if (m) dias.add(m[1]); } } catch { /* sem eventos */ }
+  const candidatos = [...dias].filter((d) => d < hoje).sort();
+  const tamanhos = new Map();
+  const dirDia = (d) => join(pasta, 'clipes', d);
+  const medir = (d) => { if (!tamanhos.has(d)) tamanhos.set(d, tamanhoDia(dirDia(d))); return tamanhos.get(d); };
+
+  let total = 0;
+  if (limite) { for (const d of dias) total += medir(d); }
+  const livre = () => livreBytes();
+  const falta = () => {
+    if (limite && total > limite) return 'limite';
+    if (minimo && livre() < minimo) return 'livre';
+    return null;
+  };
+
+  let motivo;
+  try { motivo = falta(); }
+  catch (e) { log(`Retenção por espaço ignorada: não consegui ler o espaço livre (${e.message}).`); return nada; }
+  const primeiro = motivo;
+  const apagados = [];
+  let bytes = 0;
+  for (const d of candidatos) {
+    if (!motivo) break;
+    const t = medir(d);
+    try {
+      rmSync(dirDia(d), { recursive: true, force: true });
+      rmSync(join(pasta, 'eventos', `${d}.jsonl`), { force: true });
+    } catch (err) { log(`Não consegui apagar o dia ${d} na limpeza por espaço: ${err.message}`); break; }
+    apagados.push(d); bytes += t; total -= t;
+    try { motivo = falta(); } catch { break; }
+  }
+  if (!apagados.length) return nada;
+  const gb = bytes / GB;
+  log(`Limpeza por espaço (${primeiro === 'limite' ? `clipes acima de ${maxGb} GB` : `disco livre abaixo de ${livreMinGb} GB`}): ${apagados.length} dia(s) apagado(s) (${apagados[0]} a ${apagados.at(-1)}), ${gb.toFixed(2)} GB liberados.`);
+  return { dias: apagados, gbLiberados: gb };
 }
