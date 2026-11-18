@@ -10,7 +10,7 @@ import { aplicarPrioridade } from './prioridade.js';
  * a próxima volta o conserta e o ao vivo não quebra (mesmo comportamento descrito em
  * https://github.com/jellyfin/jellyfin/issues/18436). Fica só a contagem, resumida ao fim.
  */
-const RE_RENAME_HLS = /failed to rename file \S*\.m3u8\.tmp to \S*\.m3u8\b/;
+const RE_RENAME_HLS = /failed to rename file \S*\.m3u8\.tmp to \S*\.m3u8: Operation not permitted/;
 
 const pausar = (ms) => new Promise((r) => setTimeout(r, ms));
 
