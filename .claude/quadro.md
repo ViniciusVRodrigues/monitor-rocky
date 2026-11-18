@@ -5,10 +5,11 @@
 |---|---|---|---|
 | ROCKY-6 | Avisos no celular quando ele late/chora muito (push ou Telegram); ver detector de latido com YAMNet (referência: detector de áudio do Frigate) | Opus | ROCKY-2, ROCKY-4 |
 | ROCKY-8 | Validação estrita dos números da config (hoje aceita `true` e `[5]`) | Sonnet | — |
+| ROCKY-15 | Pôr no `config.json` as chaves do ROCKY-4 (`tailscaleLoginsPermitidos`, `tailscaleExe`, `tailscaleHttpsPorta`), hoje só com padrão no código | Sonnet | ROCKY-7 (dono do config.json agora) |
 | ROCKY-9 | Retenção dos clipes também por espaço em disco (opcional) | Sonnet | — |
 
 ## Fazendo
-- **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: servidor/seguranca, app (middleware), src/config.js, script novo, README.
+- **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Falta (pessoa): instalar o Tailscale, ligar MagicDNS e HTTPS, pôr o host .ts.net em `hostsPermitidos`, abrir pelo celular (4.1) e conferir que nada está público (4.2). Perguntas do convidado e dos e-mails com a pessoa. Não arquivar a change antes.
 - **ROCKY-7: timeout no recorte de clipe + teste intermitente** (Sonnet) — change `timeout-recorte-clipe`, issue #19, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: src/deteccao/, chave nova no config.json.
 - **ROCKY-12: estabilidade fina** (Sonnet) — change `estabilidade-fina`, issue #20, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: tarefa, prioridade, vigia, supervisor, servico, ffmpeg-args, harness de testes. O `recuperou` do hls.js passou ao ROCKY-13.
 - **ROCKY-13: ajustes da página** (Opus) — change `ajustes-pagina`, issue #21, sessão filha da coordenadora (proposta, aguarda iniciar; rodada anterior descartada). Arquivos: só web/ e testes web.
