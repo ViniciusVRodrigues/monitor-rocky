@@ -24,3 +24,10 @@ Em zoom de 200% (e em tela deitada abaixo de 1024 px) o vídeo SHALL caber intei
 #### Scenario: Gravação a partir da lista rolada
 - **WHEN** a pessoa toca num evento com a lista rolada, em zoom de 200%
 - **THEN** o player aparece abaixo do cabeçalho e o "Voltar ao ao vivo" fica inteiro visível
+
+### Requirement: Linha do tempo recolhível
+Em tela de 1024 px ou mais, a linha do tempo SHALL poder recolher num trilho estreito à direita, com `aria-expanded`, e o vídeo SHALL crescer na largura que sobra, mantendo 16:9, com os controles colados embaixo e da mesma largura. A escolha SHALL ficar salva no aparelho (`localStorage` `rocky.linhaTempo`) e começar aberta. Recolhida, o trilho SHALL contar os eventos novos que chegarem. Abaixo de 1024 px a linha do tempo SHALL aparecer sempre.
+
+#### Scenario: Monitor em 1920×1080
+- **WHEN** a pessoa recolhe a linha do tempo em 1920×1080
+- **THEN** o vídeo passa de 1408×792 para cerca de 1671×940, sem cortar, com os controles visíveis, e continua assim depois de recarregar

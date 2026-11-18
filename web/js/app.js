@@ -4,6 +4,7 @@ import { criarPlayer } from './aovivo.js';
 import { criarOuvir, decidirSomAoAbrir, telaSom } from './ouvir.js';
 import { criarControles } from './controles.js';
 import { criarDia } from './dia.js';
+import { criarRecolher } from './recolher.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,6 +14,12 @@ if (topo) {
   const medirTopo = () => document.documentElement.style.setProperty('--altura-topo', `${topo.offsetHeight}px`);
   medirTopo();
   if (typeof ResizeObserver === 'function') new ResizeObserver(medirTopo).observe(topo);
+}
+
+// Em tela larga o vídeo usa a altura que sobra acima dos controles (que podem crescer com a confirmação).
+const ctrl = document.querySelector('.controles');
+if (ctrl && typeof ResizeObserver === 'function') {
+  new ResizeObserver(() => document.documentElement.style.setProperty('--altura-controles', `${ctrl.offsetHeight}px`)).observe(ctrl);
 }
 
 const PADRAO = {
@@ -185,6 +192,14 @@ async function principal() {
   }
 
   // ---------- linha do tempo ----------
+  const recolher = criarRecolher({
+    botao: $('dia-recolher'), painel: $('dia-painel'), raiz: document.documentElement,
+    mq: matchMedia('(min-width: 1024px)'),
+    armazenamento: {
+      ler: () => { try { return localStorage.getItem('rocky.linhaTempo'); } catch { return null; } },
+      gravar: (v) => { try { localStorage.setItem('rocky.linhaTempo', v); } catch { /* sem armazenamento */ } },
+    },
+  });
   const dia = criarDia({
     cfg,
     player,
@@ -219,7 +234,7 @@ async function principal() {
   abrirAoVivo({
     aoConexao,
     aoEstado: (d) => aplicarEstado(d.estado, d.ouvindoPC, d.reiniciando, false),
-    aoEvento: (ev) => dia.novoEvento(ev),
+    aoEvento: (ev) => { dia.novoEvento(ev); recolher.eventoNovo(); },
     aoNivel: (n) => {
       ultimoNivel = Date.now();
       nivelValor = Math.min(1, Math.max(0, n));

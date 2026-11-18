@@ -60,6 +60,8 @@
 
   <section class="dia" aria-labelledby="t-dia">
     <h2 id="t-dia" class="so-leitor">Linha do tempo</h2>
+    <button type="button" id="dia-recolher" class="botao trilho" aria-expanded="true" aria-controls="dia-painel"><span class="trilho-seta" aria-hidden="true"></span><span class="rotulo">Recolher linha do tempo</span></button>
+    <div id="dia-painel" class="dia-painel">
     <div class="dia-modo" role="group" aria-label="O que mostrar">
       <button type="button" id="modo-linha" class="botao" aria-pressed="true">Linha do tempo</button>
       <button type="button" id="modo-guardados" class="botao" aria-pressed="false">Guardados</button>
@@ -74,6 +76,7 @@
     <div id="pilula-area" class="pilula-area" aria-live="polite"><button type="button" id="pilula" class="botao botao-pilula" hidden></button></div>
     <div id="lista" class="lista" aria-busy="false"></div>
     <div id="guardados" class="lista" aria-busy="false" hidden></div>
+    </div>
   </section>
 </main>
 

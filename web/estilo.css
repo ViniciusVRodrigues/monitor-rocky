@@ -139,6 +139,7 @@ ul { list-style: none; }
 .aviso-erro { color: var(--erro); font-weight: 600; }
 
 /* ---------- dia ---------- */
+.trilho { display: none; }
 .dia-nav { display: grid; grid-template-columns: auto 1fr auto; gap: var(--esp-2); align-items: center; }
 .dia-nav-meio { display: flex; flex-direction: column; align-items: center; min-width: 0; text-align: center; }
 .dia-rotulo { font-weight: 700; }
@@ -241,28 +242,41 @@ ul { list-style: none; }
   .topo { position: static; flex: none; flex-wrap: nowrap; padding: var(--esp-1) var(--esp-5); }
   .topo-titulo { margin-right: 0; }
   .conexao { margin-left: auto; }
+  /* O vídeo fica no alto, os controles colados embaixo dele e com a mesma largura. A altura do vídeo é a
+     menor entre a que sobra acima dos controles e a que a largura da coluna permite (16:9). */
   .pagina {
-    flex: 1; min-height: 0; width: 100%; padding: var(--esp-3) var(--esp-5);
-    grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 440px); grid-template-rows: minmax(0, 1fr) auto;
+    --col-dia: clamp(320px, 24vw, 440px);
+    --altura-video: min(calc(100cqh - var(--altura-controles, 56px) - var(--esp-3)), calc((100cqw - var(--col-dia) - var(--esp-5)) * 9 / 16));
+    flex: 1; min-height: 0; width: 100%; padding: var(--esp-3) var(--esp-5); container-type: size;
+    grid-template-columns: minmax(0, 1fr) var(--col-dia); grid-template-rows: auto auto minmax(0, 1fr);
     gap: var(--esp-3) var(--esp-5); align-content: stretch;
   }
-  .ao-vivo { grid-column: 1; grid-row: 1; min-height: 0; container-type: size; display: grid; place-items: center; }
+  .dia-recolhida .pagina { --col-dia: 56px; }
+  .ao-vivo { grid-column: 1; grid-row: 1; height: var(--altura-video); min-height: 0; container-type: size; display: grid; place-items: center; }
   .player { width: min(100cqw, calc(100cqh * 16 / 9)); height: auto; }
-  .controles { grid-column: 1; grid-row: 2; align-content: start; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controles { grid-column: 1; grid-row: 2; align-content: start; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, calc(var(--altura-video) * 16 / 9)); justify-self: center; }
   .botao-ouvir { grid-column: auto; width: auto; min-height: 56px; }
   .controles > .botao-ouvir { grid-column: 1; }
   .grade-controles { display: contents; }
   .confirma { grid-column: 1 / -1; }
   .aviso-offline, .aviso-erro { grid-column: 1 / -1; }
-  .dia { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+  .dia { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; gap: var(--esp-2); min-height: 0; }
+  .dia-painel { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+  .trilho { display: inline-flex; flex: none; width: 100%; justify-content: flex-start; font-size: 15px; }
+  .trilho-seta::before { content: "›"; font-size: 20px; line-height: 1; }
+  .dia-recolhida .trilho { flex: 1; flex-direction: column; justify-content: flex-start; padding: var(--esp-3) 0; }
+  .dia-recolhida .trilho-seta::before { content: "‹"; }
+  .dia-recolhida .trilho .rotulo { writing-mode: vertical-rl; }
   .regua { cursor: pointer; flex: none; }
   .lista { flex: none; }
 }
 /* Tela baixa: a página rola em vez de espremer o vídeo. */
 @media (min-width: 1024px) and (max-height: 559.98px) {
   body { height: auto; overflow: visible; display: block; }
-  .ao-vivo { container-type: normal; display: block; }
+  .pagina { container-type: normal; }
+  .ao-vivo { container-type: normal; display: block; height: auto; }
   .player { width: 100%; }
+  .controles { width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
