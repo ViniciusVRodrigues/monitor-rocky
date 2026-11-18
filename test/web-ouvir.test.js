@@ -119,3 +119,44 @@ test('cadeia: origem → ganho → compressor → saída, com o fator do ganho e
   assert.equal(ganho.conectadoA, comp);
   assert.equal(comp.conectadoA, ctx.destination);
 });
+
+import { readFileSync } from 'node:fs';
+import { telaSom } from '../web/js/ouvir.js';
+
+const ESTADOS_SOM = ['desligado', 'bloqueado', 'conectando', 'tocando', 'erro', 'falhou'];
+const TEXTOS_SOM = { desligado: 'Ativar som', bloqueado: 'Toque para ouvir o Rocky', conectando: 'Conectando…', tocando: 'Silenciar', erro: 'Sem som. Reconectando…', falhou: 'Não deu para ouvir. Tentar de novo' };
+
+test('som bloqueado: um só aviso (o botão grande), sem aviso sobre o vídeo', () => {
+  const html = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /toque-ouvir/);
+  assert.doesNotMatch(readFileSync(new URL('../web/js/app.js', import.meta.url), 'utf8'), /toque-ouvir/);
+  const t = telaSom({ parado: false, estado: 'bloqueado', texto: TEXTOS_SOM.bloqueado });
+  assert.equal(t.grande.rotulo, 'Toque para ouvir o Rocky');
+  assert.equal(t.mini.rotulo, 'Ativar som'); // o mini só aparece com o grande fora da tela
+  assert.equal(t.grande.silenciado, true);
+});
+
+test('som: o texto do bloqueio é o da spec e os outros estados não mudam', () => {
+  for (const est of ESTADOS_SOM) {
+    const t = telaSom({ parado: false, estado: est, texto: TEXTOS_SOM[est] });
+    assert.equal(t.grande.rotulo, TEXTOS_SOM[est]);
+    if (est !== 'bloqueado') assert.equal(t.mini.rotulo, TEXTOS_SOM[est]);
+    assert.equal(t.grande.desativado, false);
+  }
+  assert.equal(telaSom({ parado: false, estado: 'conectando', texto: '' }).grande.ocupado, true);
+  assert.equal(telaSom({ parado: false, estado: 'falhou', texto: '' }).grande.comErro, true);
+  assert.equal(telaSom({ parado: false, estado: 'tocando', texto: '' }).grande.silenciado, false);
+});
+
+test('som com o monitor parado: botão desativado com o motivo, em qualquer estado', () => {
+  for (const est of ESTADOS_SOM) {
+    const t = telaSom({ parado: true, estado: est, texto: 'x' });
+    for (const b of [t.grande, t.mini]) {
+      assert.equal(b.rotulo, 'Sem som · nada gravando');
+      assert.equal(b.desativado, true);
+      assert.equal(b.ocupado, false);
+      assert.equal(b.comErro, false);
+      assert.equal(b.silenciado, true);
+    }
+  }
+});

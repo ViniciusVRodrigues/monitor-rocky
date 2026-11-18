@@ -159,6 +159,60 @@ test('erro fatal de mídia tenta recoverMediaError uma vez e não recria o playe
   });
 });
 
+test('recuperação de mídia volta a valer depois que o vídeo toca de novo', () => {
+  comHls((H, criados) => {
+    const { video, nos, player } = montar();
+    player.aplicar('gravando', {});
+    const h = criados[0];
+    const erroMidia = () => h.h[H.Events.ERROR]('e', { fatal: true, type: H.ErrorTypes.MEDIA_ERROR });
+    video.onplaying();
+    erroMidia();
+    assert.equal(h.recuperou, 1);
+    video.onplaying(); // voltou a tocar
+    erroMidia();
+    assert.equal(h.recuperou, 2);
+    assert.equal(criados.length, 1);
+    video.onplaying();
+    erroMidia();
+    assert.equal(h.recuperou, 3);
+    assert.equal(nos.tela.hidden, true);
+    // dois erros seguidos sem tocar no meio: aí desiste e vai para o erro
+    erroMidia();
+    assert.equal(h.recuperou, 3);
+    assert.match(nos.telaTexto.textContent, /Não consegui abrir o ao vivo/);
+  });
+});
+
+test('depois de recuperar, pede play (o hls.js recarrega o vídeo pausado) e volta a vigiar a conexão', () => {
+  comHls((H, criados) => {
+    const { video, nos, player } = montar({ conectarMs: 5000 });
+    let plays = 0;
+    video.play = () => { plays += 1; return Promise.resolve(); };
+    player.aplicar('gravando', {});
+    video.onplaying();
+    const antes = plays;
+    criados[0].h[H.Events.ERROR]('e', { fatal: true, type: H.ErrorTypes.MEDIA_ERROR });
+    assert.equal(plays, antes + 1);
+    mock.timers.tick(4999);
+    assert.equal(nos.tela.hidden, true);
+    mock.timers.tick(2); // não voltou a tocar a tempo: erro com nova tentativa, não fica parado
+    assert.match(nos.telaTexto.textContent, /Não consegui abrir o ao vivo/);
+  });
+});
+
+test('recuperou e voltou a tocar: o vigia da conexão não dispara depois', () => {
+  comHls((H, criados) => {
+    const { video, nos, player } = montar({ conectarMs: 5000 });
+    player.aplicar('gravando', {});
+    video.onplaying();
+    criados[0].h[H.Events.ERROR]('e', { fatal: true, type: H.ErrorTypes.MEDIA_ERROR });
+    video.onplaying();
+    mock.timers.tick(60000);
+    assert.equal(nos.tela.hidden, true);
+    assert.equal(criados.length, 1);
+  });
+});
+
 test('erro fatal de rede vai direto para o erro com nova tentativa', () => {
   comHls((H, criados) => {
     const { nos, player } = montar();

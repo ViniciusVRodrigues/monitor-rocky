@@ -87,12 +87,27 @@ export function montarCadeia(ctx, origem, cfg) {
 
 const TEXTOS = {
   desligado: 'Ativar som',
-  bloqueado: 'Ativar som',
+  bloqueado: 'Toque para ouvir o Rocky', // o único aviso quando o navegador bloqueia o som
   conectando: 'Conectando…',
   tocando: 'Silenciar',
   erro: 'Sem som. Reconectando…',
   falhou: 'Não deu para ouvir. Tentar de novo',
 };
+/**
+ * Como pintar o botão grande e o mini do cabeçalho. `parado`: o monitor não grava (nada a ouvir).
+ * No bloqueio o aviso é o botão grande; o mini (só aparece com o grande fora da tela) diz "Ativar som".
+ */
+export function telaSom({ parado, estado, texto }) {
+  const botao = (rotulo) => ({
+    rotulo: parado ? 'Sem som · nada gravando' : rotulo,
+    desativado: Boolean(parado),
+    ocupado: !parado && estado === 'conectando',
+    comErro: !parado && (estado === 'erro' || estado === 'falhou'),
+    silenciado: Boolean(parado) || estado === 'desligado' || estado === 'bloqueado',
+  });
+  return { grande: botao(texto), mini: botao(estado === 'bloqueado' ? 'Ativar som' : texto) };
+}
+
 const MAX_FALHAS = 3;
 const ESPERA_RECONECTAR_MS = 1500;
 

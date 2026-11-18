@@ -29,7 +29,6 @@
       <video id="video" class="video" muted playsinline></video>
       <span id="nivel" class="nivel" data-estado="sem-som"><span class="nivel-rotulo">Som</span><span id="nivel-barra" class="nivel-barra" aria-hidden="true"><span id="nivel-preench" class="nivel-preench"></span></span><span id="nivel-texto" class="nivel-texto">Sem som</span></span>
       <span id="selo" class="selo" hidden>AO VIVO · cerca de 8 s atrás</span>
-      <button type="button" id="toque-ouvir" class="botao botao-principal toque-ouvir" hidden>Toque para ouvir o Rocky</button>
       <div id="tela" class="tela" hidden>
         <div id="medidor" class="medidor" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
         <p id="tela-texto" class="tela-texto"></p>
@@ -61,6 +60,8 @@
 
   <section class="dia" aria-labelledby="t-dia">
     <h2 id="t-dia" class="so-leitor">Linha do tempo</h2>
+    <button type="button" id="dia-recolher" class="botao trilho" aria-expanded="true" aria-controls="dia-painel"><span class="trilho-seta" aria-hidden="true"></span><span class="rotulo">Recolher linha do tempo</span></button>
+    <div id="dia-painel" class="dia-painel">
     <div class="dia-modo" role="group" aria-label="O que mostrar">
       <button type="button" id="modo-linha" class="botao" aria-pressed="true">Linha do tempo</button>
       <button type="button" id="modo-guardados" class="botao" aria-pressed="false">Guardados</button>
@@ -75,6 +76,7 @@
     <div id="pilula-area" class="pilula-area" aria-live="polite"><button type="button" id="pilula" class="botao botao-pilula" hidden></button></div>
     <div id="lista" class="lista" aria-busy="false"></div>
     <div id="guardados" class="lista" aria-busy="false" hidden></div>
+    </div>
   </section>
 </main>
 
