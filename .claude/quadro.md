@@ -38,6 +38,6 @@
 - Manter o app próprio (2026-11-18): pesquisa de alternativas (Agent DVR, Frigate, Viseron, motionEye, Scrypted) não achou nenhuma que libere a câmera mantendo o som, junte 4 h contínuas com clipes de som e rode nativo no Windows com webcam USB sem nuvem paga.
 
 ## Em aberto
-- Reinstalar a tarefa (`npm run instalar-servico`, reinicia o monitor) para valer o ROCKY-12; dá para fazer junto do passo do Tailscale (ROCKY-4).
+- Reinstalar a tarefa (`npm run instalar-servico`, reinicia o monitor) para valer o ROCKY-12: decisão da pessoa (2026-11-18) é fazer junto do passo do Tailscale (ROCKY-4), um reinício só. Até lá, não mexer no monitor real.
 - Quais e-mails Google podem ver (além do da pessoa).
 - Por quanto tempo guardar os clipes de evento (padrão provisório: 30 dias, configurável).
