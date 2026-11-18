@@ -13,3 +13,7 @@ O processo node do monitor SHALL rodar na prioridade dada por `tarefaPrioridade`
 #### Scenario: Prioridade acima do normal
 - **WHEN** `tarefaPrioridade` pede acima do normal e a tarefa sobe no logon
 - **THEN** o processo node aparece com prioridade acima do normal
+
+#### Scenario: Parar a tarefa pelo Agendador
+- **WHEN** a tarefa é encerrada (`schtasks /End`, ou "Finalizar" no Agendador)
+- **THEN** o vigia percebe que o processo pai (wscript da tarefa) saiu e encerra a si mesmo, o monitor e o ffmpeg

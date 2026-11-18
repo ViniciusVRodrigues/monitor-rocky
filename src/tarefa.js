@@ -58,12 +58,12 @@ export function montarTarefaXml({ usuario, vbs, descricao = 'Monitor Rocky', pri
 `;
 }
 
-/** VBScript que sobe o vigia com a janela oculta (estilo 0) e volta na hora. */
+/** VBScript que sobe o vigia com a janela oculta (estilo 0) e espera ele terminar (a tarefa fica "em execução": `schtasks /End` derruba a árvore). */
 export function montarVbs({ node, vigia, raiz }) {
   const q = (s) => String(s).replace(/"/g, '""');
   return `Set sh = CreateObject("WScript.Shell")
 sh.CurrentDirectory = "${q(raiz)}"
-sh.Run """${q(node)}"" ""${q(vigia)}""", 0, False
+sh.Run """${q(node)}"" ""${q(vigia)}"" ""--sob-tarefa""", 0, True
 `;
 }
 
@@ -72,5 +72,33 @@ export function comandosSchtasks(nome, arquivoXml) {
     criar: ['/Create', '/TN', nome, '/XML', arquivoXml, '/F'],
     remover: ['/Delete', '/TN', nome, '/F'],
     consultar: ['/Query', '/TN', nome],
+    encerrar: ['/End', '/TN', nome],
   };
+}
+
+/**
+ * Dos processos do Windows ({ pid, ppid, nome, linha }), quais pertencem a ESTE monitor:
+ * o wscript que sobe o vigia, o vigia, o monitor (principal.js) e tudo que descende deles
+ * (ffmpeg, ffprobe). Só conta o que roda a partir de `raiz` (outro checkout não entra).
+ * Serve ao `remover-servico`, que não deve deixar node nem ffmpeg órfão.
+ */
+export function processosDoMonitor(lista, raiz) {
+  const norm = (s) => String(s ?? '').toLowerCase().replace(/\\/g, '/');
+  const base = norm(raiz).replace(/\/+$/, '');
+  const ehRaiz = (p) => {
+    const l = norm(p.linha);
+    const n = norm(p.nome);
+    if (n === 'node.exe') return l.includes(`${base}/src/vigia.js`) || l.includes(`${base}/src/principal.js`);
+    if (n === 'wscript.exe') return l.includes(`${base}/`) && l.includes('iniciar-oculto.vbs');
+    return false;
+  };
+  const alvo = new Set(lista.filter(ehRaiz).map((p) => p.pid));
+  let cresceu = true;
+  while (cresceu) {
+    cresceu = false;
+    for (const p of lista) {
+      if (!alvo.has(p.pid) && alvo.has(p.ppid)) { alvo.add(p.pid); cresceu = true; }
+    }
+  }
+  return [...alvo];
 }

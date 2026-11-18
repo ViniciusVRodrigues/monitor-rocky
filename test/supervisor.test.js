@@ -222,3 +222,22 @@ test('prioridade abaixo também é aceita', async () => {
   assert.deepEqual(ch, [[5, constants.priority.PRIORITY_BELOW_NORMAL]]);
   await s.parar();
 });
+
+test('stderr: rename do playlist HLS negado (leitor segurando o arquivo no Windows) não vai ao log, só é contado', async () => {
+  const c = cenario();
+  const s = supervisionar({ ...c.base });
+  await tick();
+  const aviso = '[hls @ 000002cc98388fc0] failed to rename file aovivo/index.m3u8.tmp to aovivo/index.m3u8: Operation not permitted\n';
+  c.filhos[0].stderr.emit('data', `${aviso}${aviso}outra coisa\n`);
+  assert.deepEqual(c.logs.filter((l) => l.startsWith('[ffmpeg]')), ['[ffmpeg] outra coisa']);
+  c.filhos[0].emit('exit', 1, null);
+  await tick();
+  assert.ok(c.logs.some((l) => /2 avisos de rename do playlist HLS/.test(l)));
+  // outro arquivo não renomeado continua aparecendo
+  const c2 = cenario();
+  const s2 = supervisionar({ ...c2.base });
+  await tick();
+  c2.filhos[0].stderr.emit('data', '[hls @ 1] failed to rename file x/seg1.ts.tmp to x/seg1.ts: No such file\n');
+  assert.equal(c2.logs.filter((l) => l.startsWith('[ffmpeg]')).length, 1);
+  await s.parar(); await s2.parar();
+});

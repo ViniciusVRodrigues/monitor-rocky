@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { vigiar } from '../src/vigia.js';
+import { vigiar, vigiarPai } from '../src/vigia.js';
 
 function filho() {
   const f = new EventEmitter();
@@ -48,4 +48,40 @@ test('junta pedaços de linha entre blocos', async () => {
   filhos[0].stdout.emit('data', Buffer.from('linha\nnova'));
   assert.deepEqual(saude, ['meia linha']);
   await v.parar();
+});
+
+test('aplica a prioridade configurada ao monitor logo depois de subir', async () => {
+  const chamadas = [];
+  const v = vigiar({
+    comando: 'node', args: [], log: () => {}, intervaloMinimoMs: 0, prioridade: 'acima',
+    definirPrioridade: (pid, valor) => chamadas.push([pid, valor]),
+    iniciarProcesso: () => filho(),
+    esperar: () => Promise.resolve(), encerrarProcesso: async (f) => { f.emit('exit', 0, null); },
+  });
+  await tick();
+  assert.equal(chamadas.length, 1);
+  assert.equal(chamadas[0][0], 1234);
+  await v.parar();
+});
+
+test('vigiarPai: quando o processo pai (wscript da tarefa) some, chama aoPerder uma vez; enquanto vive, nada', () => {
+  let vivo = true; const consultas = []; let perdeu = 0; let tique = null;
+  const parar = vigiarPai({
+    ppid: 77, vivo: (pid) => { consultas.push(pid); return vivo; }, aoPerder: () => { perdeu++; },
+    agendar: (f) => { tique = f; return 'timer'; }, cancelar: (t) => { assert.equal(t, 'timer'); tique = null; },
+  });
+  tique(); tique();
+  assert.equal(perdeu, 0);
+  vivo = false;
+  tique(); tique();
+  assert.equal(perdeu, 1);
+  assert.deepEqual(consultas.filter((p) => p !== 77), []);
+  parar();
+  assert.equal(tique, null);
+});
+
+test('vigiarPai: sem ppid válido não vigia nada', () => {
+  let agendou = false;
+  vigiarPai({ ppid: 0, vivo: () => false, aoPerder: () => assert.fail(), agendar: () => { agendou = true; } });
+  assert.equal(agendou, false);
 });
