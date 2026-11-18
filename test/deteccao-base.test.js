@@ -37,3 +37,13 @@ test('configDeteccao: valores inválidos dão ConfigErro em pt-BR', () => {
 test('configDeteccao: clipesDias 0 é aceito (nunca apagar)', () => {
   assert.equal(configDeteccao({ resolucao: '1280x720', clipesDias: 0 }).clipesDias, 0);
 });
+
+test('configDeteccao: números estritos recusam true, [5], "5", null, NaN e Infinity', () => {
+  const chaves = ['somJanelaMs', 'eventoPreSegundos', 'clipeTimeoutSegundos', 'clipeSondagensSimultaneas', 'clipesDias', 'somLimiarDb', 'movimentoLimiarPixel', 'movimentoAreaMinima'];
+  for (const k of chaves) {
+    for (const ruim of [true, [5], '5', null, NaN, Infinity, -Infinity]) {
+      assert.throws(() => configDeteccao({ resolucao: '1280x720', [k]: ruim }),
+        (e) => e instanceof ConfigErro && e.message.includes(`"${k}"`) && /recebi/.test(e.message), `${k}=${String(ruim)}`);
+    }
+  }
+});

@@ -1,8 +1,9 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve, isAbsolute } from 'node:path';
 import { nomeGuardados } from './servidor/gravacoes.js';
+import { ConfigErro, exigirNumero } from './validar.js';
 
-export class ConfigErro extends Error {}
+export { ConfigErro };
 
 const NUMEROS_POSITIVOS = [
   'trechoSegundos', 'bufferHoras', 'fps', 'fpsCamera', 'crf', 'audioHz', 'audioCanais',
@@ -36,13 +37,9 @@ export function carregarConfig(raiz) {
   for (const chave of NUMEROS_POSITIVOS) {
     if (chave === 'fpsCamera' && cfg[chave] === null) continue; // null = usa fps
     if (cfg[chave] === undefined && !['trechoSegundos', 'bufferHoras'].includes(chave)) continue;
-    if (!(Number(cfg[chave]) > 0)) {
-      throw new ConfigErro(`Configuração inválida: "${chave}" precisa ser um número maior que zero.`);
-    }
+    exigirNumero(chave, cfg[chave], { minExclusivo: 0 });
   }
-  if (cfg.tarefaPrioridade !== undefined && !(Number.isInteger(cfg.tarefaPrioridade) && cfg.tarefaPrioridade >= 0 && cfg.tarefaPrioridade <= 10)) {
-    throw new ConfigErro('Configuração inválida: "tarefaPrioridade" precisa ser um inteiro de 0 a 10.');
-  }
+  if (cfg.tarefaPrioridade !== undefined) exigirNumero('tarefaPrioridade', cfg.tarefaPrioridade, { inteiro: true, min: 0, max: 10, descricao: 'um inteiro de 0 a 10' });
   for (const k of ['ffmpegPrioridade', 'clipePrioridade']) {
     if (cfg[k] !== undefined && !PRIORIDADES.includes(cfg[k])) {
       throw new ConfigErro(`Configuração inválida: "${k}" precisa ser ${PRIORIDADES.join(', ')}.`);
@@ -60,9 +57,7 @@ export function carregarConfig(raiz) {
   if (cfg.canalControle !== undefined && !String(cfg.canalControle).trim()) {
     throw new ConfigErro('Configuração inválida: "canalControle" não pode ficar vazio.');
   }
-  if (cfg.logArquivos !== undefined && !(Number.isInteger(Number(cfg.logArquivos)) && Number(cfg.logArquivos) >= 0)) {
-    throw new ConfigErro('Configuração inválida: "logArquivos" precisa ser um inteiro maior ou igual a zero.');
-  }
+  if (cfg.logArquivos !== undefined) exigirNumero('logArquivos', cfg.logArquivos, { inteiro: true, min: 0, descricao: 'um inteiro maior ou igual a zero' });
   for (const k of ['logPasta', 'servicoNome']) {
     if (cfg[k] !== undefined && !String(cfg[k]).trim()) throw new ConfigErro(`Configuração inválida: "${k}" não pode ficar vazio.`);
   }
@@ -84,34 +79,23 @@ export function carregarConfig(raiz) {
   if (cfg.tailscaleExe !== undefined && !(typeof cfg.tailscaleExe === 'string' && cfg.tailscaleExe.trim())) {
     throw new ConfigErro('Configuração inválida: "tailscaleExe" não pode ficar vazio.');
   }
-  if (cfg.tailscaleHttpsPorta !== undefined &&
-      !(Number.isInteger(cfg.tailscaleHttpsPorta) && cfg.tailscaleHttpsPorta >= 1 && cfg.tailscaleHttpsPorta <= 65535)) {
-    throw new ConfigErro('Configuração inválida: "tailscaleHttpsPorta" precisa ser uma porta de 1 a 65535.');
-  }
+  if (cfg.tailscaleHttpsPorta !== undefined) exigirNumero('tailscaleHttpsPorta', cfg.tailscaleHttpsPorta, { inteiro: true, min: 1, max: 65535, descricao: 'uma porta de 1 a 65535' });
   if (cfg.ouvirMp3Bitrate !== undefined && !String(cfg.ouvirMp3Bitrate).trim()) {
     throw new ConfigErro('Configuração inválida: "ouvirMp3Bitrate" não pode ficar vazio.');
   }
-  if (cfg.nivelSuavizacao !== undefined &&
-      !(typeof cfg.nivelSuavizacao === 'number' && cfg.nivelSuavizacao >= 0 && cfg.nivelSuavizacao < 1)) {
-    throw new ConfigErro('Configuração inválida: "nivelSuavizacao" precisa ser um número de 0 até menos de 1.');
-  }
-  if (cfg.nivelPisoDb !== undefined && !(typeof cfg.nivelPisoDb === 'number' && cfg.nivelPisoDb < 0)) {
-    throw new ConfigErro('Configuração inválida: "nivelPisoDb" precisa ser um número negativo.');
-  }
+  if (cfg.nivelSuavizacao !== undefined) exigirNumero('nivelSuavizacao', cfg.nivelSuavizacao, { min: 0, maxExclusivo: 1, descricao: 'um número de 0 até menos de 1' });
+  if (cfg.nivelTetoDb !== undefined) exigirNumero('nivelTetoDb', cfg.nivelTetoDb, { descricao: 'um número (dBFS)' });
+  if (cfg.nivelPisoDb !== undefined) exigirNumero('nivelPisoDb', cfg.nivelPisoDb, { maxExclusivo: 0, descricao: 'um número negativo' });
   if (cfg.somAoAbrir !== undefined && typeof cfg.somAoAbrir !== 'boolean') {
     throw new ConfigErro('Configuração inválida: "somAoAbrir" precisa ser true ou false.');
   }
   for (const k of ['ouvirGanhoDb', 'ouvirPcGanhoDb', 'ouvirCompLimiarDb', 'ouvirCompJoelhoDb']) {
-    if (cfg[k] !== undefined && !(typeof cfg[k] === 'number' && Number.isFinite(cfg[k]))) {
-      throw new ConfigErro(`Configuração inválida: "${k}" precisa ser um número (dB).`);
-    }
+    if (cfg[k] !== undefined) exigirNumero(k, cfg[k], { descricao: 'um número (dB)' });
   }
   if (cfg.guardadosPasta !== undefined) {
     try { nomeGuardados(cfg); } catch (e) { throw new ConfigErro(`Configuração inválida: ${e.message}`); }
   }
-  if (cfg.guardarMaxArquivos !== undefined && !(Number.isInteger(cfg.guardarMaxArquivos) && cfg.guardarMaxArquivos > 0)) {
-    throw new ConfigErro('Configuração inválida: "guardarMaxArquivos" precisa ser um inteiro maior que zero.');
-  }
+  if (cfg.guardarMaxArquivos !== undefined) exigirNumero('guardarMaxArquivos', cfg.guardarMaxArquivos, { inteiro: true, minExclusivo: 0, descricao: 'um inteiro maior que zero' });
   if (cfg.apagarHoraTrechos !== undefined && typeof cfg.apagarHoraTrechos !== 'boolean') {
     throw new ConfigErro('Configuração inválida: "apagarHoraTrechos" precisa ser true ou false.');
   }

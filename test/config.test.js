@@ -104,3 +104,34 @@ test('apagarHoraTrechos precisa ser booleano e vem no config.json como true', ()
   const padrao = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
   assert.equal(padrao.apagarHoraTrechos, true);
 });
+
+const RUINS = [true, [5], '5', null, NaN, Infinity];
+const base = { video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4 };
+function recusa(extra, chave) {
+  const raiz = raizTemp({ ...base, ...extra });
+  try {
+    assert.throws(() => carregarConfig(raiz), (e) => e instanceof ConfigErro && e.message.includes(`"${chave}"`) && /recebi/.test(e.message), JSON.stringify(extra));
+  } finally { rmSync(raiz, { recursive: true, force: true }); }
+}
+
+test('números estritos: positivas, inteiras, com faixa e dB recusam true, [5], "5", null, NaN e Infinity', () => {
+  const tipos = ['crf', 'servidorPorta', 'ouvirCompRazao', 'tarefaPrioridade', 'logArquivos', 'tailscaleHttpsPorta',
+    'guardarMaxArquivos', 'nivelSuavizacao', 'nivelPisoDb', 'nivelTetoDb', 'ouvirGanhoDb', 'ouvirPcGanhoDb', 'trechoSegundos', 'bufferHoras'];
+  for (const chave of tipos) for (const ruim of RUINS) recusa({ [chave]: ruim }, chave);
+});
+
+test('números estritos: fpsCamera null continua valendo, inteiros recusam fração', () => {
+  const raiz = raizTemp({ ...base, fpsCamera: null });
+  try { assert.equal(carregarConfig(raiz).fpsCamera, null); } finally { rmSync(raiz, { recursive: true, force: true }); }
+  recusa({ logArquivos: 1.5 }, 'logArquivos');
+  recusa({ tailscaleHttpsPorta: 443.5 }, 'tailscaleHttpsPorta');
+  recusa({ tarefaPrioridade: 11 }, 'tarefaPrioridade');
+});
+
+test('config.json e config.local.example.json atuais carregam sem erro', () => {
+  const dir = new URL('..', import.meta.url);
+  const padrao = JSON.parse(readFileSync(new URL('config.json', dir), 'utf8'));
+  const exemplo = JSON.parse(readFileSync(new URL('config.local.example.json', dir), 'utf8'));
+  const raiz = raizTemp(padrao, exemplo);
+  try { assert.ok(carregarConfig(raiz)); } finally { rmSync(raiz, { recursive: true, force: true }); }
+});
