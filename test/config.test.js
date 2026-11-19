@@ -135,3 +135,39 @@ test('config.json e config.local.example.json atuais carregam sem erro', () => {
   const raiz = raizTemp(padrao, exemplo);
   try { assert.ok(carregarConfig(raiz)); } finally { rmSync(raiz, { recursive: true, force: true }); }
 });
+
+// ---- avisos (ROCKY-6) ----
+const baseAvisos = { video: 'a', audio: 'b', pasta: 'g', trechoSegundos: 60, bufferHoras: 4, guardadosPasta: 'guardados' };
+function cfgAvisos(extra) {
+  const raiz = raizTemp({ ...baseAvisos, ...extra });
+  try { return carregarConfig(raiz); } finally { rmSync(raiz, { recursive: true, force: true }); }
+}
+
+test('avisos: valores válidos passam', () => {
+  const c = cfgAvisos({
+    avisos: true, avisosPasta: 'avisos', avisoSomSegundos: 20, avisoIntervaloMinutos: 10, avisoSilencioInicio: '22:00', avisoSilencioFim: '07:30',
+    avisoValidadeSegundos: 600, avisoEnvioTimeoutSegundos: 15, avisosMaxInscricoes: 10,
+    avisosContato: 'mailto:eu@exemplo.test', avisosHostsPush: ['fcm.googleapis.com'],
+  });
+  assert.equal(c.avisoSilencioInicio, '22:00');
+  assert.equal(cfgAvisos({ avisoSilencioInicio: '', avisoSilencioFim: '' }).avisoSilencioFim, '');
+});
+
+test('avisos: valores inválidos são recusados', () => {
+  const ruins = [
+    { avisos: 'sim' }, { avisos: 1 },
+    { avisosPasta: '' }, { avisosPasta: '../x' }, { avisosPasta: 'a/b' }, { avisosPasta: '.oculta' }, { avisosPasta: 5 },
+    { avisosPasta: 'trechos' }, { avisosPasta: 'clipes' }, { avisosPasta: 'Eventos' }, { avisosPasta: 'aovivo' }, { avisosPasta: 'guardados' },
+    { guardadosPasta: 'meus', avisosPasta: 'meus' },
+    { avisoSomSegundos: 0 }, { avisoSomSegundos: '20' }, { avisoIntervaloMinutos: -1 }, { avisoValidadeSegundos: 0 },
+    { avisoEnvioTimeoutSegundos: 0 }, { avisosMaxInscricoes: 0 }, { avisosMaxInscricoes: 1.5 },
+    { avisoSilencioInicio: '25:00', avisoSilencioFim: '07:00' }, { avisoSilencioInicio: '22:60', avisoSilencioFim: '07:00' },
+    { avisoSilencioInicio: '22h', avisoSilencioFim: '07:00' }, { avisoSilencioInicio: '22:00', avisoSilencioFim: '' },
+    { avisoSilencioInicio: '', avisoSilencioFim: '07:00' }, { avisoSilencioInicio: 2200, avisoSilencioFim: '07:00' },
+    { avisosContato: 'http://exemplo.test' }, { avisosContato: 'eu@exemplo.test' }, { avisosContato: 'https://a b' },
+    { avisosContato: 'mailto:<a>@b.c' }, { avisosContato: '' }, { avisosContato: 5 },
+    { avisosHostsPush: [] }, { avisosHostsPush: 'fcm.googleapis.com' }, { avisosHostsPush: [''] },
+    { avisosHostsPush: ['https://fcm.googleapis.com'] }, { avisosHostsPush: ['a b'] }, { avisosHostsPush: [5] },
+  ];
+  for (const r of ruins) assert.throws(() => cfgAvisos(r), ConfigErro, JSON.stringify(r));
+});

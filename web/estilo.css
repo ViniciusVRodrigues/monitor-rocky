@@ -108,7 +108,7 @@ ul { list-style: none; }
 
 /* ---------- página ---------- */
 .pagina { display: grid; gap: var(--esp-3); padding: var(--esp-2) var(--esp-4) var(--esp-6); }
-.ao-vivo, .controles, .dia { min-width: 0; }
+.ao-vivo, .controles, .dia, .lateral, .avisos { min-width: 0; }
 .player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; color: #fff; border-radius: 12px; overflow: hidden; scroll-margin-top: calc(var(--altura-topo, 48px) + var(--esp-2)); }
 .video { display: block; width: 100%; height: 100%; background: #000; object-fit: contain; }
 .selo { position: absolute; z-index: 1; left: var(--esp-3); bottom: 32px; padding: 2px var(--esp-2); border-radius: 4px; background: rgba(0,0,0,.7); font-size: 14px; font-weight: 700; }
@@ -214,6 +214,30 @@ ul { list-style: none; }
   .hora-rodape .botao { width: auto; }
 }
 
+/* ---------- avisos no celular ---------- */
+.lateral { display: contents; }
+.avisos { scroll-margin-top: calc(var(--altura-topo, 48px) + 56.25vw + var(--esp-2)); }
+.avisos-det { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; overflow: hidden; }
+.avisos-resumo { display: flex; align-items: center; gap: var(--esp-3); min-height: 48px; padding: 0 var(--esp-3); font-weight: 600; cursor: pointer; list-style: none; }
+.avisos-resumo::-webkit-details-marker { display: none; }
+.avisos-resumo::after { content: "▾"; margin-left: auto; color: var(--texto-2); }
+.avisos-det[open] > .avisos-resumo::after { content: "▴"; }
+.avisos-resumo:focus-visible { outline-offset: -4px; }
+.avisos[data-estado="ativo"] .avisos-resumo .icone, .avisos[data-estado="ativo"] .avisos-estado { color: var(--ok); }
+.avisos[data-estado="bloqueado"] .avisos-resumo .icone, .avisos[data-estado="bloqueado"] .avisos-estado { color: var(--erro); }
+.avisos-corpo { display: grid; gap: var(--esp-3); padding: var(--esp-3); border-top: 1px solid var(--borda); }
+.avisos-corpo:empty { display: none; }
+.avisos-corpo .botao-principal { width: 100%; }
+.avisos-corpo .botao-link { min-height: 48px; }
+.avisos-acoes { display: grid; gap: var(--esp-2); }
+.avisos-como > summary { display: flex; align-items: center; min-height: 48px; font-weight: 600; cursor: pointer; }
+.avisos-como > summary::after { content: "▾"; margin-left: var(--esp-2); color: var(--texto-2); }
+.avisos-como[open] > summary::after { content: "▴"; }
+.avisos-como ul, .passos { display: grid; gap: var(--esp-2); margin: 0; padding-left: var(--esp-5); }
+.avisos-como ul { list-style: disc; }
+.passos { list-style: decimal; }
+.endereco { user-select: all; -webkit-user-select: all; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+
 /* ---------- larguras ---------- */
 @media (max-width: 599.98px) {
   .ao-vivo { margin-inline: calc(-1 * var(--esp-4)); }
@@ -260,7 +284,17 @@ ul { list-style: none; }
   .grade-controles { display: contents; }
   .confirma { grid-column: 1 / -1; }
   .aviso-offline, .aviso-erro { grid-column: 1 / -1; }
-  .dia { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; gap: var(--esp-2); min-height: 0; }
+  .lateral { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; gap: var(--esp-2); min-height: 0; }
+  .avisos { flex: none; scroll-margin-top: 0; }
+  .dia { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--esp-2); }
+  /* Coluna lateral estreita (320 px): os botões ficam empilhados. */
+  .avisos-corpo .botao-principal { width: auto; }
+  /* Trilho recolhido: só o sino, com o estado no nome acessível. */
+  .dia-recolhida .avisos-texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .dia-recolhida .avisos-resumo { justify-content: center; padding: 0; width: 48px; margin-inline: auto; }
+  .dia-recolhida .avisos-det > .avisos-resumo::after, .dia-recolhida .avisos-det[open] > .avisos-resumo::after { content: none; }
+  .dia-recolhida .avisos-det { border: 0; background: none; }
+  .dia-recolhida .avisos-corpo { display: none; }
   .dia-painel { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
   .trilho { display: inline-flex; flex: none; width: 100%; justify-content: flex-start; font-size: 15px; }
   .trilho-seta::before { content: "›"; font-size: 20px; line-height: 1; }

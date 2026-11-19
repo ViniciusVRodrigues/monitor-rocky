@@ -95,5 +95,21 @@
   "saudeTimeoutMs": 10000,
   "guardadosPasta": "guardados",
   "guardarMaxArquivos": 120,
-  "apagarHoraTrechos": true
+  "apagarHoraTrechos": true,
+  "avisos": true,
+  "avisosPasta": "avisos",
+  "avisoSomSegundos": 20,
+  "avisoIntervaloMinutos": 10,
+  "avisoSilencioInicio": "",
+  "avisoSilencioFim": "",
+  "avisoValidadeSegundos": 600,
+  "avisoEnvioTimeoutSegundos": 15,
+  "avisosMaxInscricoes": 10,
+  "avisosContato": "https://github.com/ViniciusVRodrigues/monitor-rocky",
+  "avisosHostsPush": [
+    "fcm.googleapis.com",
+    "web.push.apple.com",
+    "push.services.mozilla.com",
+    "notify.windows.com"
+  ]
 }

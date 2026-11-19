@@ -5,10 +5,15 @@ import { listarDias, lerDia, diaValido } from './linha-tempo.js';
 import { executarControle, ControleErro, estadoAtual } from './controle.js';
 import { criarAoVivo } from './ao-vivo.js';
 import { criarOuvirSite } from './ouvir-site.js';
+import { AvisoErro } from '../avisos/endpoint.js';
 import { apagarEvento, apagarHora, guardar, listarGuardados, apagarGuardado, nomeGuardados, GravacaoErro } from './gravacoes.js';
 
 const MAX_CORPO = 1024;
 const MAX_CORPO_GRAVACOES = 16 * 1024;
+const MAX_CORPO_AVISOS = 4096;
+const AVISO_TESTE = {
+  titulo: 'Rocky', corpo: 'Aviso de teste. Se você está vendo isto, os avisos funcionam.', url: '/', tag: 'rocky-teste',
+};
 
 /** ISO 8601 com o deslocamento local (ex.: 2026-11-17T14:03:05-03:00). */
 export function isoLocal(d = new Date()) {
@@ -37,10 +42,11 @@ function lerCorpo(req, max = MAX_CORPO) {
  * (req, res) => boolean, chamadas depois da checagem de Host e antes das rotas.
  * `aoEvento(fn)` registra o ouvinte de eventos novos da detecção (opcional).
  */
-export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn, log = () => {}, agora = () => new Date() }) {
+export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn, avisos, log = () => {}, agora = () => new Date() }) {
   const ouvirSite = criarOuvirSite({ cfg, distribuidor: monitor.distribuidor, spawn, log });
   const aoVivo = criarAoVivo({ cfg, monitor, aoEvento });
   let porta = 0;
+  const avisosLigados = Boolean(avisos?.ligado);
 
   const apiConfig = () => ({
     ouvirModo: cfg.ouvirModo ?? 'auto', ouvirHz: cfg.ouvirHz,
@@ -55,6 +61,10 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     somAoAbrir: cfg.somAoAbrir ?? true, nivelHz: cfg.nivelHz ?? 10,
     guardarMaxArquivos: cfg.guardarMaxArquivos ?? 120,
     apagarHoraTrechos: cfg.apagarHoraTrechos ?? true,
+    avisos: avisosLigados,
+    avisoSomSegundos: cfg.avisoSomSegundos ?? 20, avisoIntervaloMinutos: cfg.avisoIntervaloMinutos ?? 10,
+    avisoSilencioInicio: cfg.avisoSilencioInicio ?? '', avisoSilencioFim: cfg.avisoSilencioFim ?? '',
+    enderecoTailnet: (cfg.hostsPermitidos ?? [])[0] ?? '',
   });
 
   async function controle(req, res) {
@@ -107,6 +117,40 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     }
   }
 
+  /** POST de avisos: mesma proteção do controle, corpo JSON de até 4 KB. */
+  const AVISOS_POST = {
+    '/api/avisos/inscrever': (corpo) => { avisos.inscrever(corpo); return { ok: true }; },
+    '/api/avisos/cancelar': (corpo) => {
+      if (typeof corpo.endpoint !== 'string' || !corpo.endpoint) throw new AvisoErro(400, 'Endereço da inscrição inválido.');
+      avisos.cancelar(corpo.endpoint);
+      return { ok: true };
+    },
+    '/api/avisos/teste': async (corpo) => {
+      if (typeof corpo.endpoint !== 'string' || !corpo.endpoint) throw new AvisoErro(400, 'Endereço da inscrição inválido.');
+      await avisos.enviarPara(corpo.endpoint, AVISO_TESTE);
+      return { ok: true };
+    },
+  };
+
+  async function avisosPost(req, res, fn) {
+    if (!controlePermitido(req)) return json(res, 403, { ok: false, erro: 'Pedido recusado.' });
+    let corpo;
+    try {
+      corpo = JSON.parse(await lerCorpo(req, MAX_CORPO_AVISOS));
+    } catch (e) {
+      if (e instanceof ControleErro) return json(res, e.status, { ok: false, erro: e.message });
+      return json(res, 400, { ok: false, erro: 'Pedido inválido.' });
+    }
+    if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) return json(res, 400, { ok: false, erro: 'Pedido inválido.' });
+    try {
+      json(res, 200, await fn(corpo));
+    } catch (e) {
+      if (e instanceof AvisoErro) return json(res, e.status, { ok: false, erro: e.message });
+      log(`Erro nos avisos: ${e.message}`);
+      json(res, 500, { ok: false, erro: 'Não deu para concluir.' });
+    }
+  }
+
   async function rotear(req, res) {
     const url = req.url ?? '/';
     if (!url.startsWith('/')) return naoEncontrado(res);
@@ -115,6 +159,11 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     if (caminho === '/api/controle') {
       if (req.method !== 'POST') return json(res, 405, { ok: false, erro: 'Método não permitido.' }, { Allow: 'POST' });
       return controle(req, res);
+    }
+    if (Object.hasOwn(AVISOS_POST, caminho)) {
+      if (!avisosLigados) return naoEncontrado(res);
+      if (req.method !== 'POST') return json(res, 405, { ok: false, erro: 'Método não permitido.' }, { Allow: 'POST' });
+      return avisosPost(req, res, AVISOS_POST[caminho]);
     }
     if (Object.hasOwn(ESCRITA, caminho)) {
       if (req.method !== 'POST') return json(res, 405, { ok: false, erro: 'Método não permitido.' }, { Allow: 'POST' });
@@ -131,6 +180,7 @@ export function criarServidor({ cfg, raiz, monitor, aoEvento, antes = [], spawn,
     if (ehApi) {
       if (caminho === '/api/config') return json(res, 200, apiConfig());
       if (caminho === '/api/estado') return json(res, 200, { ...estadoAtual(monitor), agora: isoLocal(agora()) });
+      if (caminho === '/api/avisos/chave' && avisosLigados) return json(res, 200, { chave: avisos.chavePublica() });
       if (caminho === '/api/guardados') return json(res, 200, listarGuardados(cfg));
       if (caminho === '/api/dias') return json(res, 200, listarDias(cfg.pasta, agora()));
       if (caminho.startsWith('/api/dia/')) {

@@ -16,6 +16,8 @@ const pausar = (ms) => new Promise((r) => setTimeout(r, ms));
  *
  * Uso: `const d = await iniciarDeteccao(cfg)`; passe `d.saidasExtras` ao
  * ffmpeg; depois `d.ligar({ distribuidor })`; no fim `await d.parar()`.
+ * Som longo (ROCKY-6): com `cfg.avisoSomSegundos` > 0, `aoSomLongo(fn)` chama `fn({ inicio, duracaoMs })`
+ * uma vez por evento de som aberto que chega a essa duração (checado a cada verificação).
  * `deps` existe para os testes (relógio, pipe, recorte).
  */
 export async function iniciarDeteccao(cfgBase, { log = console.log, deps = {} } = {}) {
@@ -31,6 +33,9 @@ export async function iniciarDeteccao(cfgBase, { log = console.log, deps = {} } 
   const posMs = cfg.eventoPosSegundos * 1000;
   const margemMs = cfg.clipeMargemSegundos * 1000;
   const ouvintes = new Set();
+  const ouvintesSomLongo = new Set();
+  const avisoSomMs = Number(cfg.avisoSomSegundos) > 0 ? Number(cfg.avisoSomSegundos) * 1000 : 0;
+  let somLongoAvisado = null; // inicio do evento que já disparou
   let encerrando = false;
   let fila = Promise.resolve();
   const pendentes = new Set();
@@ -112,6 +117,13 @@ export async function iniciarDeteccao(cfgBase, { log = console.log, deps = {} } 
 
   const verificar = setInterval(() => {
     const agora = relogio();
+    const aberto = avisoSomMs ? agregadores.som.atual() : null;
+    if (aberto && aberto.fim - aberto.inicio >= avisoSomMs && somLongoAvisado !== aberto.inicio) {
+      somLongoAvisado = aberto.inicio;
+      for (const fn of ouvintesSomLongo) {
+        try { fn({ inicio: aberto.inicio, duracaoMs: aberto.fim - aberto.inicio }); } catch { /* ouvinte com defeito não afeta os outros */ }
+      }
+    }
     agregadores.som.verificar(agora);
     agregadores.movimento.verificar(agora);
   }, intervaloVerificarMs);
@@ -143,6 +155,8 @@ export async function iniciarDeteccao(cfgBase, { log = console.log, deps = {} } 
     },
     /** Inscreve `fn(registro)`, chamada uma vez por evento já gravado. Devolve a função de cancelar. */
     aoEvento(fn) { ouvintes.add(fn); return () => { ouvintes.delete(fn); }; },
+    /** Inscreve `fn({ inicio, duracaoMs })`, chamada uma vez por som longo. Devolve a função de cancelar. */
+    aoSomLongo(fn) { ouvintesSomLongo.add(fn); return () => { ouvintesSomLongo.delete(fn); }; },
     async parar() {
       encerrando = true;
       cancelarSom?.();

@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { carregarConfig, ConfigErro } from './config.js';
 import { iniciarMonitor } from './captura.js';
 import { criarServidor } from './servidor/app.js';
+import { criarAvisos } from './avisos/index.js';
+import { ligarAvisoSom } from './avisos/ligar.js';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const log = (m) => console.log(`${new Date().toLocaleString('pt-BR')} ${m}`);
@@ -16,7 +18,12 @@ async function main() {
   const monitor = await iniciarMonitor(cfg);
   const det = monitor.deteccao;
   const aoEvento = det?.aoEvento ? det.aoEvento.bind(det) : undefined;
-  const servidor = criarServidor({ cfg, raiz, monitor, aoEvento, log });
+  // Avisos no celular: falha (ex.: disco) só vai ao log e o monitor segue sem avisos.
+  let avisos;
+  try { avisos = criarAvisos({ cfg, log }); }
+  catch (e) { log(`Avisos desligados: não consegui preparar chaves e inscrições (${e.message}).`); }
+  ligarAvisoSom({ det, avisos, cfg, log });
+  const servidor = criarServidor({ cfg, raiz, monitor, aoEvento, avisos, log });
   let porta;
   try { porta = await servidor.listen(cfg.servidorPorta); }
   catch (e) {

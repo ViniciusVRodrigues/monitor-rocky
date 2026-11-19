@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Rocky · monitor</title>
+<meta name="theme-color" content="#F6F6F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121315" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="Rocky">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/icone-180.png">
 <link rel="stylesheet" href="/estilo.css">
 </head>
 <body>
@@ -58,6 +63,15 @@
     <p id="aviso-controle" class="aviso-erro" role="alert" hidden><span id="aviso-controle-texto"></span> <button type="button" id="btn-tentar-controle" class="botao botao-link">Tentar de novo</button></p>
   </section>
 
+  <div class="lateral">
+  <section class="avisos" id="avisos" aria-labelledby="t-avisos">
+    <h2 id="t-avisos" class="so-leitor">Avisos no celular</h2>
+    <details id="avisos-det" class="avisos-det" open>
+      <summary class="avisos-resumo"><svg class="icone" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="avisos-texto" class="avisos-texto">Avisos no celular · Verificando…</span></summary>
+      <div id="avisos-corpo" class="avisos-corpo" aria-busy="true"></div>
+    </details>
+  </section>
+
   <section class="dia" aria-labelledby="t-dia">
     <h2 id="t-dia" class="so-leitor">Linha do tempo</h2>
     <button type="button" id="dia-recolher" class="botao trilho" aria-expanded="true" aria-controls="dia-painel"><span class="trilho-seta" aria-hidden="true"></span><span class="rotulo">Recolher linha do tempo</span></button>
@@ -78,6 +92,7 @@
     <div id="guardados" class="lista" aria-busy="false" hidden></div>
     </div>
   </section>
+  </div>
 </main>
 
 <script src="/vendor/hls.min.js"></script>
