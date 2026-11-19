@@ -3,10 +3,10 @@
 ## A fazer
 | Cartão | Título | Modelo | Depende de |
 |---|---|---|---|
-| ROCKY-6 | Avisos no celular por web push (change `avisos-web-push`, issue #32); proposto em 2026-11-18, começa pelo plano (iPhone instalado na tela inicial, Tailscale Serve HTTPS) | Opus | ROCKY-2, ROCKY-4 |
-| ROCKY-16 | Teste de clipes com ffmpeg real estoura o tempo sob carga (change `teste-clipes-sob-carga`, issue #33); proposto em 2026-11-18, em paralelo ao ROCKY-6 | Sonnet | — |
 
 ## Fazendo
+- **ROCKY-6: avisos no celular por web push** (Opus) — change `avisos-web-push`, issue #32, sessão aberta em 2026-11-18. Decisões da pessoa: avisar na hora (20 s de som, no máximo 1 aviso a cada 10 min, sem horário de silêncio), toque abre o ao vivo; bloco aberto até ativar; ícone pegada branca sobre azul; texto "Barulho há 20 s seguidos (14:32). Toque para ver."
+- **ROCKY-16: teste de clipes estável sob carga** (Sonnet) — change `teste-clipes-sob-carga`, issue #33, sessão aberta em 2026-11-18; em QA.
 - **ROCKY-4: acesso pelo Tailscale** (Opus) — change `acesso-tailscale`, issue #18. Código no main pelo PR #22 (2026-11-18, 249 testes, QA aprovou): `recusaTailscale` (pedido de fora sem `Tailscale-User-Login` dá 403; lista `tailscaleLoginsPermitidos` vazia libera a tailnet), `npm run tailscale -- ligar|desligar|estado` só com Serve e recusa com Funnel, README "Acesso de fora". Em 2026-11-18: Tailscale instalado no PC (máquina "rocky", Serve ligado, Funnel desligado), página abre pelo endereço da tailnet com login exigido; sem convidado por enquanto. Falta só a 4.1: a pessoa abrir pelo celular fora de casa (ao vivo, som, atraso). Não arquivar a change antes.
 
 ## Feito
