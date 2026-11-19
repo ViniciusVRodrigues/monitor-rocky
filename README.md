@@ -267,7 +267,7 @@ O monitor avisa o celular, com uma notificação, quando o Rocky faz barulho (we
 | `avisoEnvioTimeoutSegundos` | 15 | tempo máximo de cada envio |
 | `avisosMaxInscricoes` | 10 | inscrições guardadas; passou disso, a mais antiga sai |
 | `avisosContato` | URL do repositório | `sub` do VAPID: `https://` ou `mailto:` |
-| `avisosHostsPush` | Google, Apple, Mozilla e Microsoft | hosts aceitos no endereço da inscrição (o próprio host e seus subdomínios) |
+| `avisosHostsPush` | Google, Apple, Mozilla e Microsoft | hosts aceitos no endereço da inscrição (o próprio host e seus subdomínios; não ponha domínio genérico como `googleapis.com`) |
 
 ## Estado
 

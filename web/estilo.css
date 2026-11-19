@@ -287,12 +287,12 @@ ul { list-style: none; }
   .lateral { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; gap: var(--esp-2); min-height: 0; }
   .avisos { flex: none; scroll-margin-top: 0; }
   .dia { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--esp-2); }
-  .avisos-acoes { grid-template-columns: 1fr 1fr; }
+  /* Coluna lateral estreita (320 px): os botões ficam empilhados. */
   .avisos-corpo .botao-principal { width: auto; }
   /* Trilho recolhido: só o sino, com o estado no nome acessível. */
   .dia-recolhida .avisos-texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .dia-recolhida .avisos-resumo { justify-content: center; padding: 0; width: 48px; margin-inline: auto; }
-  .dia-recolhida .avisos-resumo::after { content: none; }
+  .dia-recolhida .avisos-det > .avisos-resumo::after, .dia-recolhida .avisos-det[open] > .avisos-resumo::after { content: none; }
   .dia-recolhida .avisos-det { border: 0; background: none; }
   .dia-recolhida .avisos-corpo { display: none; }
   .dia-painel { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
