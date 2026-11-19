@@ -1,7 +1,7 @@
 ## 1. Causa
-- [ ] 1.1 Reproduzir: `npm test` repetido (10 rodadas) e com carga de CPU extra; anotar qual teste estoura e em quanto tempo.
-- [ ] 1.2 Causa achada e escrita aqui, com arquivo:linha e os links que decidiram, se houve pesquisa.
+- [x] 1.1 Reproduzido: 3 rodadas de `npm test` com 24 processos queimando CPU (suíte 27 s → 125–149 s) passaram. O arquivo de clipes sozinho, 6 cópias ao mesmo tempo mais 60 queimadores (~66 processos em 12 núcleos), também passou, mas o teste `janela dentro de um trecho` levou 124 s, colado nos 120 s de `clipeTimeoutSegundos` (o 2º mais lento, `acharTrechos: só os que cruzam a janela`, 35 s). É o que estoura sob carga.
+- [x] 1.2 Causa: o `CFG` dos testes com ffmpeg real (`test/deteccao-clipes.test.js:14`) não define `clipePrioridade`, então `recortarClipe` usa o padrão `'abaixo'` (`src/deteccao/clipes.js:165`) e roda o ffmpeg abaixo do normal, disputando CPU com as outras suítes e perdendo; o recorte então chega perto do limite de 120 s do mesmo `clipes.js:165` e é morto com "passou do tempo limite". Sem pesquisa externa: a causa saiu da medição. Não é a concorrência do `node --test` nem o ffprobe (`sondagemTimeoutMs` é 0 nos testes).
 
 ## 2. Correção
-- [ ] 2.1 Corrigir a causa sem só aumentar espera às cegas.
-- [ ] 2.2 10 rodadas de `npm test` verdes, pelo menos 3 delas com carga de CPU extra; o tempo total da suíte não piora de forma visível.
+- [x] 2.1 `CFG` dos testes com ffmpeg real ganhou `clipePrioridade: 'normal'` (`test/deteccao-clipes.test.js:14`); o limite de 120 s do produto não foi mexido.
+- [x] 2.2 10 rodadas de `npm test` verdes: 7 sem carga extra (25–56 s, variando com as outras sessões do PC) e 3 com 24 queimadores de CPU (87–88 s, contra 125–149 s antes da correção). O estresse pesado do arquivo de clipes (6 cópias + 60 queimadores) caiu de 261 s para 220 s.

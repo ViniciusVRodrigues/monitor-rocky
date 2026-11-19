@@ -11,7 +11,8 @@ const temFfmpeg = spawnSync('ffmpeg', ['-version'], { windowsHide: true }).statu
 if (!temFfmpeg) console.warn('AVISO: ffmpeg/ffprobe fora do PATH; testes de clipes pulados.');
 const opts = { skip: !temFfmpeg && 'ffmpeg ausente' };
 
-const CFG = { ffmpeg: 'ffmpeg', clipePreset: 'ultrafast', clipeCrf: 30, miniaturaLargura: 160 };
+// clipePrioridade 'normal': no padrão ('abaixo') o ffmpeg real morre de fome de CPU sob carga e estoura o clipeTimeoutSegundos (120 s).
+const CFG = { ffmpeg: 'ffmpeg', clipePrioridade: 'normal', clipePreset: 'ultrafast', clipeCrf: 30, miniaturaLargura: 160 };
 const T0 = new Date(2026, 2, 10, 10, 0, 0).getTime(); // 10:00:00 local
 let raiz; // pasta de gravações de teste
 let comEspaco;
