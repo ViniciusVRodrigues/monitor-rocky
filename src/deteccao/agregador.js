@@ -37,5 +37,10 @@ export function criarAgregador({ tipo, juntarMs, maxMs, aoFechar }) {
     if (agoraMs - evento.fim >= juntarMs || evento.fim - evento.inicio >= maxMs) fechar();
   }
 
-  return { atividade, verificar, encerrar: fechar, aberto: () => evento !== null };
+  return {
+    atividade, verificar, encerrar: fechar,
+    aberto: () => evento !== null,
+    /** Cópia de { inicio, fim } do evento aberto, ou null. */
+    atual: () => (evento ? { inicio: evento.inicio, fim: evento.fim } : null),
+  };
 }

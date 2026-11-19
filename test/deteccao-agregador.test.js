@@ -54,3 +54,17 @@ test('aoFechar que lança erro não quebra', () => {
   assert.doesNotThrow(() => a.verificar(100));
   assert.ok(!a.aberto());
 });
+
+test('atual() devolve cópia do evento aberto, ou null', () => {
+  const { a } = criar();
+  assert.equal(a.atual(), null);
+  a.atividade(1000, 0.2);
+  assert.deepEqual(a.atual(), { inicio: 1000, fim: 1000 });
+  a.atividade(5000, 0.4);
+  const c = a.atual();
+  assert.deepEqual(c, { inicio: 1000, fim: 5000 });
+  c.fim = 99; // mexer na cópia não muda o evento
+  assert.deepEqual(a.atual(), { inicio: 1000, fim: 5000 });
+  a.verificar(60000);
+  assert.equal(a.atual(), null);
+});

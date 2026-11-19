@@ -15,6 +15,7 @@ const NUMEROS_POSITIVOS = [
   'ouvirMp3AtrasoMaxSegundos', 'sseBatidaSegundos', 'linhaTempoAtualizarSegundos',
   'controleTempoLimiteSegundos', 'nivelHz', 'saudeTimeoutMs', 'aovivoConectarSegundos', 'ouvirCompRazao',
   'logJanelaSegundos', 'logLinhasPorJanela', 'logFilaMaxKB',
+  'avisoSomSegundos', 'avisoValidadeSegundos', 'avisoEnvioTimeoutSegundos',
 ];
 const PRIORIDADES = ['abaixo', 'normal', 'acima', 'alta'];
 const ESTADOS_INICIAIS = ['gravando', 'so-som', 'parado'];
@@ -24,6 +25,43 @@ function lerJson(arquivo) {
     return JSON.parse(readFileSync(arquivo, 'utf8'));
   } catch (e) {
     throw new ConfigErro(`Não consegui ler ${arquivo}: ${e.message}`);
+  }
+}
+
+const NOME_PASTA = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+const HOST = /^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$/;
+
+/** Chaves de avisos por web push (ROCKY-6). */
+function validarAvisos(cfg) {
+  const erro = (m) => { throw new ConfigErro(`Configuração inválida: ${m}`); };
+  if (cfg.avisos !== undefined && typeof cfg.avisos !== 'boolean') erro('"avisos" precisa ser true ou false.');
+  if (cfg.avisosPasta !== undefined) {
+    const n = cfg.avisosPasta;
+    const reservadas = ['trechos', 'clipes', 'eventos', 'aovivo', nomeGuardados(cfg).toLowerCase()];
+    if (typeof n !== 'string' || !NOME_PASTA.test(n) || reservadas.includes(n.toLowerCase())) {
+      erro('"avisosPasta" precisa ser um nome simples de pasta, diferente de trechos, clipes, eventos, aovivo e da pasta dos guardados.');
+    }
+  }
+  if (cfg.avisoIntervaloMinutos !== undefined) exigirNumero('avisoIntervaloMinutos', cfg.avisoIntervaloMinutos, { min: 0, descricao: 'um número maior ou igual a zero' });
+  if (cfg.avisosMaxInscricoes !== undefined) exigirNumero('avisosMaxInscricoes', cfg.avisosMaxInscricoes, { inteiro: true, minExclusivo: 0, descricao: 'um inteiro maior que zero' });
+  const ini = cfg.avisoSilencioInicio ?? '';
+  const fim = cfg.avisoSilencioFim ?? '';
+  for (const [k, v] of [['avisoSilencioInicio', ini], ['avisoSilencioFim', fim]]) {
+    if (typeof v !== 'string' || (v !== '' && !HORA.test(v))) erro(`"${k}" precisa ser vazio ou um horário HH:MM (ex.: 22:00).`);
+  }
+  if ((ini === '') !== (fim === '')) erro('"avisoSilencioInicio" e "avisoSilencioFim" precisam ficar os dois vazios ou os dois preenchidos.');
+  if (cfg.avisosContato !== undefined) {
+    const c = cfg.avisosContato;
+    if (typeof c !== 'string' || !/^(https:\/\/|mailto:)/.test(c) || /[\s<>]/.test(c) || c.length > 300) {
+      erro('"avisosContato" precisa começar com https:// ou mailto: e não ter espaço nem < >.');
+    }
+  }
+  if (cfg.avisosHostsPush !== undefined) {
+    const l = cfg.avisosHostsPush;
+    if (!(Array.isArray(l) && l.length > 0 && l.every((h) => typeof h === 'string' && HOST.test(h)))) {
+      erro('"avisosHostsPush" precisa ser uma lista não vazia de nomes de host (ex.: fcm.googleapis.com).');
+    }
   }
 }
 
@@ -99,6 +137,7 @@ export function carregarConfig(raiz) {
   if (cfg.apagarHoraTrechos !== undefined && typeof cfg.apagarHoraTrechos !== 'boolean') {
     throw new ConfigErro('Configuração inválida: "apagarHoraTrechos" precisa ser true ou false.');
   }
+  validarAvisos(cfg);
   cfg.pasta = isAbsolute(cfg.pasta) ? cfg.pasta : resolve(raiz, cfg.pasta);
   return cfg;
 }

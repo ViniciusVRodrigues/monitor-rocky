@@ -245,6 +245,30 @@ A página aberta no próprio PC (`http://127.0.0.1:8321/`) segue sem login.
 
 Referências: [Tailscale Serve](https://tailscale.com/kb/1312/serve) (cabeçalhos de identidade, uso com localhost) e [`tailscale serve`](https://tailscale.com/docs/reference/tailscale-cli/serve.md) (sintaxe).
 
+## Avisos no celular (ROCKY-6)
+
+O monitor avisa o celular, com uma notificação, quando o Rocky faz barulho (web push, padrão VAPID). O aviso sai do PC para o serviço de push do navegador (Google, Apple, Mozilla ou Microsoft) por HTTPS de saída; nada entra de fora, o servidor segue só em `127.0.0.1` e a página segue só pelo Tailscale. O texto vai cifrado de ponta a ponta e não leva dado sensível.
+
+- **Como ativar:** com `avisos` ligado (padrão), abra a página pelo endereço do Tailscale no celular e permita as notificações. As chaves VAPID são geradas na primeira subida.
+- **iPhone:** o iOS só entrega push a páginas instaladas. Use iOS 16.4 ou mais novo, abra a página no Safari, toque em Compartilhar e em "Adicionar à Tela de Início", e ative os avisos de dentro do ícone instalado.
+- **Onde ficam:** chaves e inscrições vão em `gravacoes/avisos/` (`vapid.json` e `inscricoes.json`), fora do git, e nenhuma limpeza de gravações toca essa pasta. A pasta não é servida pela página.
+- **Contato do VAPID:** `avisosContato` é enviado ao serviço de push (Google, Apple, Mozilla). O padrão é a URL do repositório; um `mailto:` com o seu e-mail só deve entrar no `config.local.json`, nunca no `config.json`.
+- **Tailscale desligado:** o aviso chega mesmo assim (vem pelo serviço de push), mas abrir a página ao tocar nele exige o Tailscale ligado no celular.
+- **Segurança:** o endereço de cada inscrição só é aceito se for HTTPS num dos hosts de `avisosHostsPush` (evita que o PC faça pedido a um endereço escolhido por quem se inscreve). Inscrever, cancelar e testar passam pelas mesmas regras de acesso das outras rotas.
+
+| Chave | Padrão | Para quê |
+| --- | --- | --- |
+| `avisos` | `true` | liga os avisos (sem inscrição, nada é enviado; `false` não cria chaves nem pasta e as rotas dão 404) |
+| `avisosPasta` | `avisos` | subpasta de `pasta` com chaves e inscrições (nome simples; não pode ser `trechos`, `clipes`, `eventos`, `aovivo` nem `guardadosPasta`) |
+| `avisoSomSegundos` | 20 | som contínuo (pausas menores que `eventoJuntarSegundos`) por esse tempo dispara o aviso |
+| `avisoIntervaloMinutos` | 10 | mínimo entre dois avisos (`0` = sem espera) |
+| `avisoSilencioInicio`, `avisoSilencioFim` | `""`, `""` | horário sem avisos, `HH:MM`, pode cruzar a meia-noite; os dois vazios = sem silêncio, ou os dois preenchidos |
+| `avisoValidadeSegundos` | 600 | por quanto tempo o serviço de push guarda o aviso se o celular estiver sem rede (TTL) |
+| `avisoEnvioTimeoutSegundos` | 15 | tempo máximo de cada envio |
+| `avisosMaxInscricoes` | 10 | inscrições guardadas; passou disso, a mais antiga sai |
+| `avisosContato` | URL do repositório | `sub` do VAPID: `https://` ou `mailto:` |
+| `avisosHostsPush` | Google, Apple, Mozilla e Microsoft | hosts aceitos no endereço da inscrição (o próprio host e seus subdomínios) |
+
 ## Estado
 
 Em construção. Especificação e decisões em [`openspec/`](openspec/). Licença MIT.

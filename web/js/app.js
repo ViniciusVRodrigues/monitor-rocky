@@ -5,6 +5,7 @@ import { criarOuvir, decidirSomAoAbrir, telaSom } from './ouvir.js';
 import { criarControles } from './controles.js';
 import { criarDia } from './dia.js';
 import { criarRecolher } from './recolher.js';
+import { iniciarAvisos } from './avisos.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -208,6 +209,9 @@ async function principal() {
   });
   dia.definirOffline(true);
   dia.iniciar();
+
+  // ---------- avisos no celular ----------
+  iniciarAvisos({ cfg, anunciar });
 
   // ---------- conexão e SSE ----------
   function aoConexao(ok) {

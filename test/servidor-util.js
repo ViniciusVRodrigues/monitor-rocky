@@ -39,7 +39,7 @@ export function procFalso() {
   return p;
 }
 
-export async function cenario({ cfg = {}, monitor = monitorFalso(), antes = [], spawn, aoEvento, agora } = {}) {
+export async function cenario({ cfg = {}, monitor = monitorFalso(), antes = [], spawn, aoEvento, agora, avisos } = {}) {
   const raiz = mkdtempSync(join(tmpdir(), 'rocky-srv-'));
   const pasta = join(raiz, 'gravacoes');
   mkdirSync(join(raiz, 'web', 'js'), { recursive: true });
@@ -53,7 +53,7 @@ export async function cenario({ cfg = {}, monitor = monitorFalso(), antes = [], 
     controleTempoLimiteSegundos: 20, nivelHz: 10, nivelSuavizacao: 0.6, nivelPisoDb: -60, hostsPermitidos: ['rocky.exemplo.test'],
     ...cfg,
   };
-  const servidor = criarServidor({ cfg: c, raiz, monitor, antes, spawn, aoEvento, agora });
+  const servidor = criarServidor({ cfg: c, raiz, monitor, antes, spawn, aoEvento, agora, avisos: typeof avisos === 'function' ? avisos(c) : avisos });
   const porta = await servidor.listen(0);
   function req(caminho, { metodo = 'GET', headers = {}, corpo } = {}) {
     return new Promise((resolve, reject) => {
